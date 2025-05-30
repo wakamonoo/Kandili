@@ -5,77 +5,113 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tsunagari – Love Diary</title>
 
-    <!-- Tailwind CSS (via CDN) -->
+    <!-- Tailwind (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Google Font (optional romantic feel) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet">
+    <!-- Cute font (optional) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap"
+      rel="stylesheet"
+    />
 
-    <!-- Firebase v9 (compat builds keep code tiny) -->
+    <!-- Firebase compat v9 -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-    <!-- PWA meta (optional) -->
-    <link rel="manifest" href="manifest.json" />
   </head>
 
-  <body class="min-h-screen bg-rose-50 text-gray-800 flex flex-col font-sans"
-        style="font-family: 'Dancing Script', cursive;">
-
-    <!-- ▾ Top-bar --------------------------------------------------- -->
+  <body
+    class="min-h-screen bg-rose-50 text-gray-800 flex flex-col"
+    style="font-family: 'Dancing Script', cursive"
+  >
+    <!-- ▾ Navbar -->
     <header class="bg-white shadow-md">
-      <div class="mx-auto max-w-3xl px-4 py-3 flex justify-between items-center">
+      <div
+        class="mx-auto max-w-3xl px-4 py-3 flex justify-between items-center"
+      >
         <h1 class="text-3xl text-rose-500 select-none">Tsunagari</h1>
-        <button id="signOutBtn"
-                class="text-sm text-gray-500 hover:text-gray-700 hidden">
-          Sign&nbsp;out
-        </button>
+
+        <div class="space-x-4">
+          <button
+            id="signInBtn"
+            class="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Sign in with Google
+          </button>
+          <button
+            id="signOutBtn"
+            class="hidden text-sm text-gray-500 hover:text-gray-700"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- ▾ Timeline -------------------------------------------------- -->
-    <main id="timeline"
-          class="flex-1 w-full max-w-3xl mx-auto p-4 space-y-4 overflow-y-auto">
-      <!-- Entries injected here -->
+    <!-- ▾ Timeline -->
+    <main
+      id="timeline"
+      class="hidden flex-1 w-full max-w-3xl mx-auto p-4 space-y-4 overflow-y-auto"
+    >
+      <!-- entries injected here -->
     </main>
 
-    <!-- ▾ Floating “add” button ------------------------------------ -->
-    <button id="openModalBtn"
-      class="fixed bottom-6 right-6 bg-rose-500 hover:bg-rose-600 text-white
-             w-14 h-14 rounded-full shadow-lg text-3xl flex items-center
-             justify-center" title="New entry">＋
+    <!-- ▾ Floating add button -->
+    <button
+      id="openModalBtn"
+      class="hidden fixed bottom-6 right-6 bg-rose-500 hover:bg-rose-600 text-white w-14 h-14 rounded-full shadow-lg text-3xl flex items-center justify-center"
+      title="New entry"
+    >
+      ＋
     </button>
 
-    <!-- ▾ Entry Modal ---------------------------------------------- -->
-    <div id="entryModal"
-      class="fixed inset-0 bg-black/40 flex items-center justify-center
-             backdrop-blur-sm hidden">
+    <!-- ▾ Entry Modal -->
+    <div
+      id="entryModal"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
+    >
       <div class="bg-white w-11/12 max-w-md rounded-2xl shadow-xl p-6">
         <h2 class="text-xl font-semibold mb-4">New memory</h2>
 
         <label class="block text-sm mb-1" for="entryDate">Date</label>
-        <input id="entryDate" type="date"
-               class="w-full rounded-lg border-gray-300 mb-3" />
+        <input
+          id="entryDate"
+          type="date"
+          class="w-full rounded-lg border-gray-300 mb-3"
+        />
 
         <label class="block text-sm mb-1" for="entryNote">Note</label>
-        <textarea id="entryNote" rows="4"
+        <textarea
+          id="entryNote"
+          rows="4"
           class="w-full rounded-lg border-gray-300 mb-3"
-          placeholder="Write something sweet…"></textarea>
+          placeholder="Write something sweet…"
+        ></textarea>
 
-        <label class="block text-sm mb-1" for="entryImg">Photo (optional)</label>
-        <input id="entryImg" type="file" accept="image/*" class="w-full mb-4" />
+        <label class="block text-sm mb-1" for="entryImg"
+          >Photos (you can pick many)</label
+        >
+        <input
+          id="entryImg"
+          type="file"
+          accept="image/*"
+          multiple
+          class="w-full mb-4"
+        />
 
         <div class="flex justify-end space-x-3">
-          <button id="cancelBtn"
-            class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200">
+          <button
+            id="cancelBtn"
+            class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+          >
             Cancel
           </button>
-          <button id="saveEntryBtn"
-            class="px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600
-                   text-white disabled:opacity-50">
+          <button
+            id="saveEntryBtn"
+            class="px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white disabled:opacity-50"
+          >
             Save
           </button>
         </div>
