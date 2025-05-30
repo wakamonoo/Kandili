@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tsunagari – Love Diary</title>
 
-    <!-- Tailwind (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Cute font (optional) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,17 +14,17 @@
       rel="stylesheet"
     />
 
-    <!-- Firebase compat v9 -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
   </head>
 
   <body
     class="min-h-screen bg-rose-50 text-gray-800 flex flex-col"
-    style="font-family: 'Dancing Script', cursive"
+    style="font-family: 'Nunito', sans-serif"
   >
-    <!-- ▾ Navbar -->
     <header class="bg-white shadow-md">
       <div
         class="mx-auto max-w-3xl px-4 py-3 flex justify-between items-center"
@@ -50,15 +48,40 @@
       </div>
     </header>
 
-    <!-- ▾ Timeline -->
+    <div
+      id="loadingOverlay"
+      class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[100] hidden"
+    >
+      <div
+        class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-rose-500"
+      ></div>
+    </div>
+
     <main
       id="timeline"
-      class="hidden flex-1 w-full max-w-3xl mx-auto p-4 space-y-4 overflow-y-auto"
+      class="flex-1 w-full max-w-3xl mx-auto p-4 overflow-y-auto"
     >
-      <!-- entries injected here -->
+      <div id="welcomeMessage" class="text-center p-8 hidden flex flex-col items-center justify-center h-full">
+        <img
+          src="images/fallback.png"
+          alt="Welcome to your diary"
+          class="max-w-xs mx-auto mb-4"
+        />
+      </div>
+
+      <div id="noDataMessage" class="text-center p-8 hidden flex flex-col items-center justify-center h-full">
+        <p class="text-xl text-rose-400 font-semibold">
+          It's a blank canvas!
+        </p>
+        <p class="text-gray-500 mt-2">
+          Start creating beautiful memories together. Click the '＋' button to add your first entry.
+        </p>
+      </div>
+
+      <div id="timelineEntries" class="space-y-4">
+        </div>
     </main>
 
-    <!-- ▾ Floating add button -->
     <button
       id="openModalBtn"
       class="hidden fixed bottom-6 right-6 bg-rose-500 hover:bg-rose-600 text-white w-14 h-14 rounded-full shadow-lg text-3xl flex items-center justify-center"
@@ -67,7 +90,6 @@
       ＋
     </button>
 
-    <!-- ▾ Entry Modal -->
     <div
       id="entryModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
@@ -118,7 +140,6 @@
       </div>
     </div>
 
-    <!-- ▾ App logic -->
     <script type="module" src="./js/main.js"></script>
   </body>
 </html>
