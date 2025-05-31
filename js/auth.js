@@ -1,14 +1,12 @@
 // js/auth.js
-
-import { auth, db } from './firebase.js'; // Import initialized Firebase services
+import { auth, db } from './firebase.js';
 import { DOM } from './dom.js';
 import { updateTimelineDisplay, showLoadingOverlay, hideLoadingOverlay } from './ui.js';
 import { fetchAndRenderTimelineEntries } from './timeline.js';
 
-let currentUserProfile = null; // Store current user's Firestore profile
-let friendUserProfiles = new Map(); // Store friend profiles for quick lookup
+let currentUserProfile = null;
+let friendUserProfiles = new Map();
 
-// Expose these for other modules that need user info
 export const getCurrentUserProfile = () => currentUserProfile;
 export const getFriendUserProfiles = () => friendUserProfiles;
 
@@ -33,39 +31,54 @@ export function setupAuthListeners() {
     if (!user) {
       currentUserProfile = null;
       friendUserProfiles.clear();
-      // Unsubscribe from any previous listeners if necessary (handled in timeline.js)
       return;
     }
 
     showLoadingOverlay();
 
-    // Initialize/get user profile in 'users' collection
     const userProfileDocRef = db.collection("users").doc(user.uid);
     const userProfileSnap = await userProfileDocRef.get();
 
+    // Create or update user profile with lowercase fields
+    const profileData = {
+      uid: user.uid,
+      displayName: user.displayName,
+      displayNameLower: user.displayName.toLowerCase(),
+      photoURL: user.photoURL,
+      email: user.email,
+      emailLower: user.email.toLowerCase(),
+      friends: [],
+      pendingRequests: [],
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+
     if (!userProfileSnap.exists) {
-      // Create new user profile if it doesn't exist
-      await userProfileDocRef.set({
-        uid: user.uid,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-        email: user.email,
-        friends: [],
-        pendingRequests: [],
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
+      await userProfileDocRef.set(profileData);
+    } else {
+      // Update existing profile if missing lowercase fields
+      const updateData = {};
+      const existing = userProfileSnap.data();
+      
+      if (!existing.displayNameLower) {
+        updateData.displayNameLower = profileData.displayNameLower;
+      }
+      
+      if (!existing.emailLower) {
+        updateData.emailLower = profileData.emailLower;
+      }
+      
+      if (Object.keys(updateData).length > 0) {
+        await userProfileDocRef.update(updateData);
+      }
     }
 
-    // Listen for real-time updates to the current user's profile
+    // Listen for real-time updates
     userProfileDocRef.onSnapshot(async (snap) => {
       currentUserProfile = snap.data();
-      // Update friend profiles if friends list changes
       await fetchFriendProfiles(currentUserProfile.friends);
-      // Re-render timeline to reflect potential friend changes or new content
       await fetchAndRenderTimelineEntries();
     });
 
-    // Initial fetch and render of timeline entries
     await fetchAndRenderTimelineEntries();
     hideLoadingOverlay();
   });
@@ -78,15 +91,18 @@ function setAuthUI(user) {
   DOM.openModalBtn.classList.toggle("hidden", !isLoggedIn);
   DOM.addFriendBtn.classList.toggle("hidden", !isLoggedIn);
   DOM.friendRequestsBtn.classList.toggle("hidden", !isLoggedIn);
-  DOM.timelineEntries.innerHTML = ""; // Clear entries on auth state change
+  DOM.timelineEntries.innerHTML = "";
   if (!isLoggedIn) updateTimelineDisplay("welcome");
   else updateTimelineDisplay("loading");
 }
 
 async function fetchFriendProfiles(friendUids) {
-  friendUserProfiles.clear(); // Clear previous profiles
+  friendUserProfiles.clear();
   if (friendUids && friendUids.length > 0) {
-    const friendSnaps = await db.collection("users").where(firebase.firestore.FieldPath.documentId(), 'in', friendUids).get();
+    const friendSnaps = await db.collection("users")
+      .where(firebase.firestore.FieldPath.documentId(), 'in', friendUids)
+      .get();
+      
     friendSnaps.forEach(doc => {
       friendUserProfiles.set(doc.id, doc.data());
     });

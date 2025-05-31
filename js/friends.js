@@ -1,65 +1,61 @@
 // js/friends.js
-// -----------------------------------------------------------------------------
-// Friends & requests logic for Tsunagari – Love Diary
-// -----------------------------------------------------------------------------
-
 import { db, auth, FieldValue } from "./firebase.js";
 import { DOM } from "./dom.js";
 import {
   Toast,
   showLoadingOverlay,
   hideLoadingOverlay,
-  showAddFriendModal,
   hideAddFriendModal,
-  showFriendRequestsModal,
-  hideFriendRequestsModal,
 } from "./ui.js";
 import { getCurrentUserProfile } from "./auth.js";
 
-// -----------------------------------------------------------------------------
-// Public API
-// -----------------------------------------------------------------------------
+let searchTimeout;
+
 export function setupFriendListeners() {
-  /* ---------- “Add friend” modal ---------- */
   DOM.addFriendBtn.onclick = () => {
-    showAddFriendModal();
+    DOM.addFriendModal.classList.remove("hidden");
     DOM.addFriendSearchInput.value = "";
     DOM.addFriendSearchResults.innerHTML = "";
   };
 
-  DOM.closeAddFriendModalBtn.onclick = hideAddFriendModal;
+  DOM.closeAddFriendModalBtn.onclick = () => {
+    DOM.addFriendModal.classList.add("hidden");
+  };
 
-  DOM.addFriendSearchInput.onkeyup = handleFriendSearch;
+  DOM.addFriendSearchInput.onkeyup = (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => handleFriendSearch(e), 300);
+  };
 
-  /* ---------- “Friend requests” modal ---------- */
   DOM.friendRequestsBtn.onclick = async () => {
-    showFriendRequestsModal();
+    DOM.friendRequestsModal.classList.remove("hidden");
     await loadFriendRequests();
   };
 
-  DOM.closeFriendRequestsModalBtn.onclick = hideFriendRequestsModal;
+  DOM.closeFriendRequestsModalBtn.onclick = () => {
+    DOM.friendRequestsModal.classList.add("hidden");
+  };
 }
 
-// -----------------------------------------------------------------------------
-// Search helpers
-// -----------------------------------------------------------------------------
 async function handleFriendSearch(e) {
   const termRaw = e.target.value.trim();
   const term = termRaw.toLowerCase();
   DOM.addFriendSearchResults.innerHTML = "";
 
-  if (term.length < 3) return; // minimum characters
+  if (term.length < 3) {
+    DOM.addFriendSearchResults.innerHTML = `
+      <p class="text-gray-500 text-center py-4">
+        Type at least 3 characters to search
+      </p>
+    `;
+    return;
+  }
 
   showLoadingOverlay();
 
   try {
     const usersRef = db.collection("users");
 
-    // ------------------------------------------------------------------
-    // Build two parallel queries (Firestore has no OR operator):
-    //   1. displayNameLower  (prefix match)
-    //   2. emailLower        (prefix match)
-    // ------------------------------------------------------------------
     const nameQuery = usersRef
       .where("displayNameLower", ">=", term)
       .where("displayNameLower", "<=", term + "\uf8ff")
@@ -76,32 +72,37 @@ async function handleFriendSearch(e) {
 
     hideLoadingOverlay();
 
-    // Merge snapshots, deduplicate by uid / doc ID
+    // Merge and deduplicate results
     const docs = [];
     const seen = new Set();
-    [nameSnap, emailSnap].forEach((snap) =>
+
+    [nameSnap, emailSnap].forEach((snap) => {
       snap.forEach((doc) => {
         if (!seen.has(doc.id)) {
           seen.add(doc.id);
           docs.push(doc);
         }
-      })
-    );
+      });
+    });
 
     if (docs.length === 0) {
-      DOM.addFriendSearchResults.innerHTML =
-        '<p class="text-gray-500 text-center">No users found.</p>';
+      DOM.addFriendSearchResults.innerHTML = `
+        <p class="text-gray-500 text-center py-4">
+          No users found for "${termRaw}"
+        </p>
+      `;
       return;
     }
 
     renderSearchResults(docs);
   } catch (err) {
     hideLoadingOverlay();
-    Swal.fire({
-      icon: "error",
-      title: "Search failed",
-      text: err.message,
-    });
+    console.error("Search error:", err);
+    DOM.addFriendSearchResults.innerHTML = `
+      <p class="text-red-500 text-center py-4">
+        Search failed: ${err.message}
+      </p>
+    `;
   }
 }
 
@@ -110,25 +111,25 @@ function renderSearchResults(userDocs) {
 
   userDocs.forEach((doc) => {
     const data = doc.data();
-    if (data.uid === auth.currentUser.uid) return; // skip self
+    if (data.uid === auth.currentUser.uid) return;
 
     const isFriend = profile.friends.includes(data.uid);
     const isPendingSent = profile.pendingRequests.includes(data.uid);
-    const isPendingReceived =
-      data.pendingRequests &&
-      data.pendingRequests.includes(auth.currentUser.uid);
+    const isPendingReceived = data.pendingRequests?.includes(
+      auth.currentUser.uid
+    );
 
     const row = document.createElement("div");
     row.className =
-      "flex items-center justify-between p-2 border-b border-gray-200 last:border-b-0";
+      "flex items-center justify-between p-3 border-b border-gray-200 last:border-b-0";
     row.innerHTML = `
       <div class="flex items-center">
-        <img src="${data.photoURL || "https://via.placeholder.com/24"}"
+        <img src="${data.photoURL || "https://via.placeholder.com/40"}"
              alt="${data.displayName}"
-             class="w-8 h-8 rounded-full mr-3">
+             class="w-10 h-10 rounded-full mr-3">
         <div>
           <p class="font-semibold">${data.displayName}</p>
-          <p class="text-sm text-gray-500">${data.email || ""}</p>
+          <p class="text-sm text-gray-500">${data.email || "No email"}</p>
         </div>
       </div>
       <div>
@@ -136,11 +137,11 @@ function renderSearchResults(userDocs) {
           isFriend
             ? '<span class="text-green-500 text-sm">Friends</span>'
             : isPendingReceived
-            ? '<button class="px-3 py-1 rounded-md bg-rose-200 text-rose-800 text-sm" disabled>Request&nbsp;Sent&nbsp;To&nbsp;You</button>'
+            ? '<button class="px-3 py-1 rounded-md bg-rose-200 text-rose-800 text-sm" disabled>Request Sent</button>'
             : isPendingSent
             ? '<button class="px-3 py-1 rounded-md bg-gray-200 text-gray-600 text-sm" disabled>Pending</button>'
             : `<button class="send-friend-request-btn px-3 py-1 rounded-md bg-rose-500 text-white hover:bg-rose-600 text-sm"
-                       data-target-uid="${data.uid}">Add&nbsp;Friend</button>`
+                       data-target-uid="${data.uid}">Add Friend</button>`
         }
       </div>
     `;
@@ -152,16 +153,13 @@ function renderSearchResults(userDocs) {
         await sendFriendRequest(targetUid);
         evt.target.disabled = true;
         evt.target.textContent = "Pending";
-        evt.target.classList.remove("bg-rose-500", "hover:bg-rose-600");
-        evt.target.classList.add("bg-gray-200", "text-gray-600");
+        evt.target.classList.replace("bg-rose-500", "bg-gray-200");
+        evt.target.classList.replace("hover:bg-rose-600", "text-gray-600");
       };
     }
   });
 }
 
-// -----------------------------------------------------------------------------
-// Friend-request helpers
-// -----------------------------------------------------------------------------
 async function sendFriendRequest(targetUid) {
   const currentUid = auth.currentUser.uid;
   const targetRef = db.collection("users").doc(targetUid);
@@ -172,6 +170,7 @@ async function sendFriendRequest(targetUid) {
     });
     Toast.fire({ icon: "success", title: "Friend request sent!" });
   } catch (err) {
+    console.error("Send request error:", err);
     Swal.fire({
       icon: "error",
       title: "Failed to send request",
@@ -184,11 +183,14 @@ async function loadFriendRequests() {
   DOM.friendRequestsList.innerHTML = "";
 
   const profile = getCurrentUserProfile();
-  const pending = profile?.pendingRequests ?? [];
+  const pending = profile?.pendingRequests || [];
 
   if (pending.length === 0) {
-    DOM.friendRequestsList.innerHTML =
-      '<p class="text-gray-500 text-center">No pending friend requests.</p>';
+    DOM.friendRequestsList.innerHTML = `
+      <p class="text-gray-500 text-center py-6">
+        No pending friend requests
+      </p>
+    `;
     return;
   }
 
@@ -202,19 +204,23 @@ async function loadFriendRequests() {
     hideLoadingOverlay();
 
     if (snaps.empty) {
-      DOM.friendRequestsList.innerHTML =
-        '<p class="text-gray-500 text-center">No pending friend requests.</p>';
+      DOM.friendRequestsList.innerHTML = `
+        <p class="text-gray-500 text-center py-6">
+          No pending friend requests
+        </p>
+      `;
       return;
     }
 
     snaps.forEach((doc) => renderRequestRow(doc.data()));
   } catch (err) {
     hideLoadingOverlay();
-    Swal.fire({
-      icon: "error",
-      title: "Failed to load requests",
-      text: err.message,
-    });
+    console.error("Load requests error:", err);
+    DOM.friendRequestsList.innerHTML = `
+      <p class="text-red-500 text-center py-6">
+        Failed to load requests: ${err.message}
+      </p>
+    `;
   }
 }
 
@@ -223,18 +229,21 @@ function renderRequestRow(data) {
 
   const row = document.createElement("div");
   row.className =
-    "flex items-center justify-between p-2 border-b border-gray-200 last:border-b-0";
+    "flex items-center justify-between p-3 border-b border-gray-200 last:border-b-0";
   row.innerHTML = `
     <div class="flex items-center">
-      <img src="${data.photoURL || "https://via.placeholder.com/24"}"
+      <img src="${data.photoURL || "https://via.placeholder.com/40"}"
            alt="${data.displayName}"
-           class="w-8 h-8 rounded-full mr-3">
-      <p class="font-semibold">${data.displayName}</p>
+           class="w-10 h-10 rounded-full mr-3">
+      <div>
+        <p class="font-semibold">${data.displayName}</p>
+        <p class="text-sm text-gray-500">${data.email || "No email"}</p>
+      </div>
     </div>
     <div class="space-x-2">
       <button class="accept-request-btn px-3 py-1 rounded-md bg-green-500 text-white hover:bg-green-600 text-sm"
               data-uid="${uid}">Accept</button>
-      <button class="reject-request-btn px-3 py-1 rounded-md bg-red-500 text-white hover:bg-red-600 text-sm"
+      <button class="reject-request-btn px-3 py-1 rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm"
               data-uid="${uid}">Reject</button>
     </div>
   `;
@@ -266,10 +275,11 @@ async function handleFriendRequest(requestorUid, accept) {
       await currentRef.update({
         pendingRequests: FieldValue.arrayRemove(requestorUid),
       });
-      Toast.fire({ icon: "info", title: "Friend request rejected." });
+      Toast.fire({ icon: "info", title: "Friend request rejected" });
     }
-    await loadFriendRequests(); // refresh list
+    await loadFriendRequests();
   } catch (err) {
+    console.error("Handle request error:", err);
     Swal.fire({
       icon: "error",
       title: "Action failed",
