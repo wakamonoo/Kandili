@@ -1,220 +1,222 @@
 // js/newsfeed.js
-import { db, auth } from './firebase.js';
-import { DOM } from './dom.js';
-import { showLoadingOverlay, hideLoadingOverlay } from './ui.js';
+import { db, auth, FieldValue } from './firebase.js';
+import { DOM }               from './dom.js';
+import { showLoadingOverlay,
+         hideLoadingOverlay,
+         escapeHTML,
+         Toast }             from './ui.js';
 import { getFriendUserProfiles } from './auth.js';
 
+/* ─────────────────────────── INITIAL SETUP ─────────────────────────── */
 export function setupNewsfeedListeners() {
   DOM.newsfeedBtn.onclick = () => {
-    showNewsfeedModal();
+    showNewsfeedPage();
+    setActiveTab('allPostsTab');
     loadNewsfeed();
   };
-  
-  DOM.closeNewsfeedModalBtn.onclick = hideNewsfeedModal;
-  
+
   DOM.allPostsTab.onclick = () => {
     setActiveTab('allPostsTab');
     loadNewsfeed();
   };
-  
+
   DOM.latestPostsTab.onclick = () => {
     setActiveTab('latestPostsTab');
     loadLatestPosts();
   };
 }
 
-function setActiveTab(activeId) {
-  // Remove active class from all tabs
-  DOM.allPostsTab.classList.remove('bg-newsfeed-blue', 'text-white');
-  DOM.latestPostsTab.classList.remove('bg-newsfeed-blue', 'text-white');
-  
-  // Add active class to the clicked tab
-  const activeTab = document.getElementById(activeId);
-  activeTab.classList.add('bg-newsfeed-blue', 'text-white');
+/* helper: show page & hide others that have [data-page] */
+function showNewsfeedPage() {
+  document.querySelectorAll('[data-page]').forEach(p => p.classList.add('hidden'));
+  DOM.newsfeedPage.classList.remove('hidden');
 }
 
-export function showNewsfeedModal() {
-  DOM.newsfeedModal.classList.remove("hidden");
+function setActiveTab(id) {
+  DOM.allPostsTab.classList.remove('bg-newsfeed-blue','text-white','active');
+  DOM.latestPostsTab.classList.remove('bg-newsfeed-blue','text-white','active');
+
+  const btn = document.getElementById(id);
+  btn.classList.add('bg-newsfeed-blue','text-white','active');
 }
 
-export function hideNewsfeedModal() {
-  DOM.newsfeedModal.classList.add("hidden");
-}
-
+/* ─────────────────────── LOADERS (friends’ posts only) ─────────────────────── */
 export async function loadNewsfeed() {
-  showLoadingOverlay();
-  DOM.newsfeedContent.innerHTML = "";
-  
-  try {
-    const currentUserUid = auth.currentUser.uid;
-    const friendProfiles = getFriendUserProfiles();
-    
-    if (!friendProfiles.size) {
-      DOM.newsfeedContent.innerHTML = `
-        <div class="text-center py-8">
-          <p class="text-gray-500">Add friends to see their posts!</p>
-        </div>
-      `;
-      return;
-    }
-    
-    // Get posts from all friends
-    const friendUids = Array.from(friendProfiles.keys());
-    let allEntries = [];
-    
-    for (const friendUid of friendUids) {
-      const friendEntriesSnap = await db.collection("couples")
-        .doc(friendUid)
-        .collection("entries")
-        .orderBy("createdAt", "desc")
-        .get();
-      
-      friendEntriesSnap.forEach(doc => {
-        allEntries.push({ 
-          id: doc.id, 
-          ...doc.data(), 
-          ownerUid: friendUid 
-        });
-      });
-    }
-    
-    // Sort by date (newest first)
-    allEntries.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
-    
-    // Render posts
-    if (allEntries.length === 0) {
-      DOM.newsfeedContent.innerHTML = `
-        <div class="text-center py-8">
-          <p class="text-gray-500">No posts from friends yet.</p>
-        </div>
-      `;
-    } else {
-      allEntries.forEach(entry => {
-        renderNewsfeedPost(entry);
-      });
-    }
-  } catch (error) {
-    console.error("Error loading newsfeed:", error);
-    DOM.newsfeedContent.innerHTML = `
-      <div class="text-center py-8">
-        <p class="text-red-500">Failed to load newsfeed. Please try again.</p>
-      </div>
-    `;
-  } finally {
-    hideLoadingOverlay();
-  }
+  await loadPosts({ latestOnly:false });
 }
-
 async function loadLatestPosts() {
+  await loadPosts({ latestOnly:true });
+}
+
+async function loadPosts({ latestOnly }) {
   showLoadingOverlay();
-  DOM.newsfeedContent.innerHTML = "";
-  
+  DOM.newsfeedContent.innerHTML = '';
+
   try {
-    const currentUserUid = auth.currentUser.uid;
-    const friendProfiles = getFriendUserProfiles();
-    
+    const friendProfiles = getFriendUserProfiles();  // Map<uid,profile>
     if (!friendProfiles.size) {
-      DOM.newsfeedContent.innerHTML = `
-        <div class="text-center py-8">
-          <p class="text-gray-500">Add friends to see their posts!</p>
-        </div>
-      `;
+      DOM.newsfeedContent.innerHTML = blank("Add friends to see their posts!");
       return;
     }
-    
-    // Get only the latest post from each friend
-    const friendUids = Array.from(friendProfiles.keys());
-    let latestEntries = [];
-    
-    for (const friendUid of friendUids) {
-      const friendEntrySnap = await db.collection("couples")
-        .doc(friendUid)
-        .collection("entries")
-        .orderBy("createdAt", "desc")
-        .limit(1)
-        .get();
-      
-      if (!friendEntrySnap.empty) {
-        const doc = friendEntrySnap.docs[0];
-        latestEntries.push({ 
-          id: doc.id, 
-          ...doc.data(), 
-          ownerUid: friendUid 
-        });
-      }
+
+    const uids = Array.from(friendProfiles.keys());
+    const entries = [];
+
+    for (const uid of uids) {
+      let q = db.collection('couples').doc(uid).collection('entries')
+                .orderBy('createdAt','desc');
+      if (latestOnly) q = q.limit(1);
+
+      const snap = await q.get();
+      snap.forEach(doc => entries.push({ id: doc.id, ...doc.data(), ownerUid: uid }));
     }
-    
-    // Sort by date (newest first)
-    latestEntries.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
-    
-    // Render posts
-    if (latestEntries.length === 0) {
-      DOM.newsfeedContent.innerHTML = `
-        <div class="text-center py-8">
-          <p class="text-gray-500">No posts from friends yet.</p>
-        </div>
-      `;
+
+    entries.sort((a,b) => b.createdAt.toDate() - a.createdAt.toDate());
+    if (!entries.length) {
+      DOM.newsfeedContent.innerHTML = blank("No posts from friends yet.");
     } else {
-      latestEntries.forEach(entry => {
-        renderNewsfeedPost(entry);
-      });
+      entries.forEach(renderPost);
     }
-  } catch (error) {
-    console.error("Error loading latest posts:", error);
-    DOM.newsfeedContent.innerHTML = `
-      <div class="text-center py-8">
-        <p class="text-red-500">Failed to load posts. Please try again.</p>
-      </div>
-    `;
+  } catch (e) {
+    console.error(e);
+    DOM.newsfeedContent.innerHTML = blank("Failed to load news-feed. Please try again.", true);
   } finally {
     hideLoadingOverlay();
   }
 }
 
-function renderNewsfeedPost(entry) {
-  const friendProfiles = getFriendUserProfiles();
-  const ownerProfile = friendProfiles.get(entry.ownerUid);
-  
-  if (!ownerProfile) return;
-  
-  const ownerName = ownerProfile.displayName;
-  const ownerPhoto = ownerProfile.photoURL || "https://via.placeholder.com/40";
-  const entryDate = entry.createdAt.toDate().toLocaleDateString();
-  const imageCount = entry.imageUrls?.length || 0;
-  
-  const postElement = document.createElement("div");
-  postElement.className = "bg-white rounded-xl shadow-md p-4 newsfeed-post";
-  postElement.innerHTML = `
+/* ─────────────────────────── RENDER ONE POST ─────────────────────────── */
+function renderPost(entry) {
+  const profiles = getFriendUserProfiles();
+  const profile  = profiles.get(entry.ownerUid);
+  if (!profile) return;
+
+  const name = profile.displayName || 'Unknown';
+  const photo= profile.photoURL || 'https://via.placeholder.com/40';
+  const date = entry.createdAt?.toDate().toLocaleDateString() || '';
+
+  const urls = entry.imageUrls || (entry.imageUrl ? [entry.imageUrl] : []);
+  const likeCount = entry.likes?.length || 0;
+
+  const art = document.createElement('article');
+  art.className = 'bg-white rounded-xl shadow-md p-4 newsfeed-post';
+  art.innerHTML = `
     <div class="flex items-center mb-3">
-      <img src="${ownerPhoto}" alt="${ownerName}" class="w-10 h-10 rounded-full mr-3">
+      <img src="${photo}" class="w-10 h-10 rounded-full mr-3" alt="${name}">
       <div>
-        <p class="font-semibold">${ownerName}</p>
-        <p class="text-sm text-gray-500">${entryDate}</p>
+        <p class="font-semibold">${name}</p>
+        <p class="text-sm text-gray-500">${date}</p>
       </div>
     </div>
-    
-    <p class="mb-3 whitespace-pre-wrap">${entry.note || ""}</p>
-    
-    ${imageCount > 0 ? `
+
+    <p class="mb-3 whitespace-pre-wrap">${escapeHTML(entry.note||'')}</p>
+
+    ${urls.length ? `
       <div class="grid grid-cols-2 gap-2 mb-3">
-        ${entry.imageUrls.slice(0, 2).map(url => 
-          `<img src="${url}" class="rounded-lg object-cover h-40 w-full">`
-        ).join('')}
+        ${urls.slice(0,2).map(u=>`<img src="${u}" class="rounded-lg object-cover h-40 w-full">`).join('')}
       </div>
-      ${imageCount > 2 ? `<p class="text-sm text-gray-500">+${imageCount - 2} more photos</p>` : ''}
+      ${urls.length>2 ? `<p class="text-sm text-gray-500">+${urls.length-2} more photos</p>`:''}
     ` : ''}
-    
-    <div class="flex items-center mt-3 pt-3 border-t border-gray-100">
-      <button class="like-btn flex items-center text-rose-500 mr-4">
-        <i class="fas fa-heart mr-1"></i>
-        <span class="like-count">${entry.likes?.length || 0}</span>
+
+    <div class="flex items-center pt-3 border-t border-gray-100">
+      <button class="like-btn flex items-center text-rose-500 mr-4"
+              data-entry-id="${entry.id}" data-owner-uid="${entry.ownerUid}">
+        <i class="fas fa-heart mr-1"></i><span class="like-count">${likeCount}</span>
       </button>
-      <button class="comment-btn flex items-center text-gray-500">
-        <i class="fas fa-comment mr-1"></i>
-        <span>Comment</span>
+      <button class="comment-toggle flex items-center text-gray-500">
+        <i class="fas fa-comment mr-1"></i><span>Comments</span>
       </button>
+    </div>
+
+    <div class="comments-section mt-4 hidden">
+      <div class="comments-list space-y-2"></div>
+      <div class="flex mt-3">
+        <input type="text" placeholder="Add a comment…" class="comment-input flex-1 rounded-lg border-gray-300">
+        <button class="send-comment-btn ml-2 px-4 py-2 bg-rose-500 text-white rounded-lg">Send</button>
+      </div>
     </div>
   `;
-  
-  DOM.newsfeedContent.appendChild(postElement);
+  DOM.newsfeedContent.append(art);
+
+  /* likes */
+  const likeBtn = art.querySelector('.like-btn');
+  likeBtn.onclick = async () => {
+    const ref = db.collection('couples').doc(entry.ownerUid).collection('entries').doc(entry.id);
+    const snap = await ref.get();
+    if (!snap.exists) return;
+    let likes = snap.data().likes || [];
+    const me = auth.currentUser.uid;
+    likes = likes.includes(me) ? likes.filter(u=>u!==me) : [...likes,me];
+    await ref.update({ likes });
+  };
+
+  /* live like count */
+  db.collection('couples').doc(entry.ownerUid).collection('entries').doc(entry.id)
+    .onSnapshot(s => {
+      const likes = s.data()?.likes || [];
+      art.querySelector('.like-count').textContent = likes.length;
+      const icon = likeBtn.querySelector('i');
+      if (likes.includes(auth.currentUser.uid)) {
+        icon.classList.add('fas','fa-heart'); icon.classList.remove('fa-heart-o');
+        likeBtn.classList.add('text-rose-600');
+      } else {
+        icon.classList.remove('fas','fa-heart'); icon.classList.add('fa-heart-o');
+        likeBtn.classList.remove('text-rose-600');
+      }
+    });
+
+  /* comments */
+  const toggle   = art.querySelector('.comment-toggle');
+  const section  = art.querySelector('.comments-section');
+  const list     = art.querySelector('.comments-list');
+  const input    = art.querySelector('.comment-input');
+  const sendBtn  = art.querySelector('.send-comment-btn');
+
+  toggle.onclick = () => section.classList.toggle('hidden');
+
+  sendBtn.onclick = async () => {
+    const txt = input.value.trim();
+    if (!txt) return;
+    await db.collection('couples').doc(entry.ownerUid).collection('entries')
+            .doc(entry.id).collection('comments').add({
+              userId:   auth.currentUser.uid,
+              userName: auth.currentUser.displayName,
+              userPhoto: auth.currentUser.photoURL,
+              commentText: txt,
+              createdAt: FieldValue.serverTimestamp()
+            });
+    input.value='';
+    Toast.fire({icon:'success',title:'Comment added!'});
+  };
+
+  /* live comment list */
+  db.collection('couples').doc(entry.ownerUid).collection('entries')
+    .doc(entry.id).collection('comments').orderBy('createdAt','asc')
+    .onSnapshot(snap=>{
+      list.innerHTML='';
+      snap.forEach(cdoc=>{
+        const c = cdoc.data();
+        const div=document.createElement('div');
+        div.className='flex items-start text-sm';
+        div.innerHTML=`
+          <img src="${c.userPhoto||'https://via.placeholder.com/24'}" class="w-6 h-6 rounded-full mr-2 mt-1">
+          <div>
+            <p><span class="font-semibold">${c.userName}:</span> ${escapeHTML(c.commentText)}</p>
+            <p class="text-xs text-gray-400">${c.createdAt ? new Date(c.createdAt.toDate()).toLocaleString() : 'Just now'}</p>
+          </div>
+          ${c.userId===auth.currentUser.uid ? `
+            <button class="ml-auto text-gray-400 hover:text-red-500 delete-comment"><i class="fas fa-trash-alt text-xs"></i></button>
+          `:''}
+        `;
+        list.append(div);
+
+        if (c.userId===auth.currentUser.uid) {
+          div.querySelector('.delete-comment').onclick=()=>cdoc.ref.delete();
+        }
+      });
+    });
 }
+
+/* utility */
+const blank = (msg, err=false) => `
+  <div class="text-center py-8"><p class="${err?'text-red-500':'text-gray-500'}">${msg}</p></div>`;

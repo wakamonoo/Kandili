@@ -10,12 +10,10 @@
       tailwind.config = {
         theme: {
           extend: {
-            colors: {
-              'newsfeed-blue': '#3b82f6',
-            }
-          }
-        }
-      }
+            colors: { "newsfeed-blue": "#3b82f6" },
+          },
+        },
+      };
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -28,29 +26,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/feather-icons"></script>
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
-    <style>
-      .newsfeed-post {
-        transition: all 0.3s ease;
-      }
-      .newsfeed-post:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      }
-      .tab-button {
-        transition: all 0.2s ease;
-      }
-      .tab-button.active {
-        border-bottom: 3px solid #3b82f6;
-        color: #3b82f6;
-        font-weight: 600;
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
 
   <body
@@ -61,7 +44,10 @@
       <div
         class="mx-auto max-w-3xl px-4 py-3 flex justify-between items-center"
       >
-        <img src="images/logo.png" alt="logo" class="h-10" />
+        <a href="index.html">
+          <img src="images/logo.png" alt="logo" class="h-10" />
+        </a>
+
         <div class="space-x-4">
           <button
             id="signInBtn"
@@ -90,6 +76,7 @@
 
     <main
       id="timeline"
+      data-page
       class="flex-1 w-full max-w-3xl mx-auto p-4 overflow-y-auto"
     >
       <div
@@ -117,41 +104,76 @@
       <div id="timelineEntries" class="space-y-4"></div>
     </main>
 
+    <section
+      id="newsfeedPage"
+      data-page
+      class="hidden flex-1 w-full max-w-3xl mx-auto p-4 overflow-y-auto"
+    >
+      <div class="flex gap-2 mb-4">
+        <button
+          id="allPostsTab"
+          class="tab-button px-3 py-1 rounded-md bg-gray-100 text-gray-700 active"
+        >
+          All Posts
+        </button>
+        <button
+          id="latestPostsTab"
+          class="tab-button px-3 py-1 rounded-md bg-gray-100 text-gray-700"
+        >
+          Latest
+        </button>
+      </div>
+
+      <div id="newsfeedContent" class="space-y-6"></div>
+    </section>
+
     <div class="fixed bottom-6 right-6 flex flex-col items-end space-y-4">
       <button
-        id="newsfeedBtn"
-        class="bg-newsfeed-blue text-white hover:bg-blue-600 w-14 h-14 rounded-full shadow-lg flex items-center justify-center"
-        title="Newsfeed"
+        id="fabToggleBtn"
+        class="md:hidden bg-rose-500 hover:bg-rose-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center"
+        title="More options"
       >
-        <i class="fas fa-newspaper text-xl"></i>
-      </button>
-      
-      <button
-        id="friendRequestsBtn"
-        class="bg-white text-rose-500 hover:text-white hover:bg-rose-500 w-14 h-14 rounded-full shadow-lg flex items-center justify-center border border-rose-300"
-        title="Friend requests"
-      >
-        <i class="fas fa-user-friends text-xl"></i>
+        <i class="fas fa-bars text-xl transition-transform duration-300"></i>
       </button>
 
-      <button
-        id="addFriendBtn"
-        class="bg-rose-500 hover:bg-rose-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center"
-        title="Add friend"
+      <div
+        id="fabButtonsContainer"
+        class="fab-buttons flex flex-col items-end space-y-4 md:block"
       >
-        <i class="fas fa-user-plus text-xl"></i>
-      </button>
+        <button
+          id="newsfeedBtn"
+          class="bg-newsfeed-blue text-white hover:bg-blue-600 w-14 h-14 rounded-full shadow-lg flex items-center justify-center"
+          title="Newsfeed"
+        >
+          <i class="fas fa-newspaper text-xl"></i>
+        </button>
 
-      <button
-        id="openModalBtn"
-        class="hidden bg-rose-500 hover:bg-rose-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center relative"
-        title="New entry"
-      >
-        <i class="fas fa-plus text-xl absolute"></i>
-      </button>
+        <button
+          id="friendRequestsBtn"
+          class="bg-white text-rose-500 hover:text-white hover:bg-rose-500 w-14 h-14 rounded-full shadow-lg flex items-center justify-center border border-rose-300"
+          title="Friend requests"
+        >
+          <i class="fas fa-user-friends text-xl"></i>
+        </button>
+
+        <button
+          id="addFriendBtn"
+          class="bg-rose-500 hover:bg-rose-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center"
+          title="Add friend"
+        >
+          <i class="fas fa-user-plus text-xl"></i>
+        </button>
+
+        <button
+          id="openModalBtn"
+          class="hidden bg-rose-500 hover:bg-rose-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center relative"
+          title="New entry"
+        >
+          <i class="fas fa-plus text-xl absolute"></i>
+        </button>
+      </div>
     </div>
 
-    <!-- Entry Modal -->
     <div
       id="entryModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
@@ -202,7 +224,6 @@
       </div>
     </div>
 
-    <!-- Add Friend Modal -->
     <div
       id="addFriendModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
@@ -230,7 +251,6 @@
       </div>
     </div>
 
-    <!-- Friend Requests Modal -->
     <div
       id="friendRequestsModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
@@ -252,35 +272,7 @@
       </div>
     </div>
 
-    <!-- Newsfeed Modal -->
-    <div
-      id="newsfeedModal"
-      class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
-    >
-      <div class="bg-white w-11/12 max-w-2xl rounded-2xl shadow-xl p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">Friends' Newsfeed</h2>
-          <div class="flex space-x-2">
-            <button id="allPostsTab" class="tab-button px-3 py-1 rounded-md bg-gray-100 text-gray-700 active">All Posts</button>
-            <button id="latestPostsTab" class="tab-button px-3 py-1 rounded-md bg-gray-100 text-gray-700">Latest</button>
-          </div>
-        </div>
-        
-        <div id="newsfeedContent" class="space-y-4 max-h-[70vh] overflow-y-auto">
-          <!-- Newsfeed posts will be inserted here -->
-        </div>
-        
-        <div class="flex justify-end mt-4">
-          <button
-            id="closeNewsfeedModalBtn"
-            class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
-          >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-
     <script type="module" src="./js/main.js"></script>
+    <script src="./js/menu.js"></script>
   </body>
 </html>

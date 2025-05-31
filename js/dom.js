@@ -1,40 +1,46 @@
 // js/dom.js
-
 const $ = (id) => document.getElementById(id);
 
 export const DOM = {
-  signInBtn: $("signInBtn"),
+  /* auth & header */
+  signInBtn:  $("signInBtn"),
   signOutBtn: $("signOutBtn"),
-  timeline: $("timeline"),
-  timelineEntries: $("timelineEntries"),
-  openModalBtn: $("openModalBtn"), // Renamed for consistency with HTML
-  addFriendBtn: $("addFriendBtn"),
-  friendRequestsBtn: $("friendRequestsBtn"),
-  entryModal: $("entryModal"),
-  cancelBtn: $("cancelBtn"),
-  saveEntryBtn: $("saveEntryBtn"), // Renamed for clarity
-  loadingOverlay: $("loadingOverlay"),
-  welcomeMessage: $("welcomeMessage"),
-  noDataMessage: $("noDataMessage"),
-  entryDateInput: $("entryDate"), // Renamed for clarity
-  entryNoteInput: $("entryNote"), // Renamed for clarity
-  entryImgInput: $("entryImg"), // Renamed for clarity
 
-  // Newsfeed elements
-  newsfeedBtn: $("newsfeedBtn"),
-  newsfeedModal: $("newsfeedModal"),
-  newsfeedContent: $("newsfeedContent"),
-  closeNewsfeedModalBtn: $("closeNewsfeedModalBtn"),
-  allPostsTab: $("allPostsTab"),
-  latestPostsTab: $("latestPostsTab"),
+  /* timeline page */
+  timeline:         $("timeline"),
+  timelineEntries:  $("timelineEntries"),
+  welcomeMessage:   $("welcomeMessage"),
+  noDataMessage:    $("noDataMessage"),
 
-  // New DOM references for friend features
-  addFriendModal: $("addFriendModal"),
-  addFriendSearchInput: $("addFriendSearchInput"),
-  addFriendSearchResults: $("addFriendSearchResults"),
-  closeAddFriendModalBtn: $("closeAddFriendModalBtn"),
+  /* entry creation */
+  openModalBtn:   $("openModalBtn"),
+  entryModal:     $("entryModal"),
+  cancelBtn:      $("cancelBtn"),
+  saveEntryBtn:   $("saveEntryBtn"),
+  entryDateInput: $("entryDate"),
+  entryNoteInput: $("entryNote"),
+  entryImgInput:  $("entryImg"),
 
-  friendRequestsModal: $("friendRequestsModal"),
-  friendRequestsList: $("friendRequestsList"),
+  /* add friend */
+  addFriendBtn:             $("addFriendBtn"),
+  addFriendModal:           $("addFriendModal"),
+  addFriendSearchInput:     $("addFriendSearchInput"),
+  addFriendSearchResults:   $("addFriendSearchResults"),
+  closeAddFriendModalBtn:   $("closeAddFriendModalBtn"),
+
+  /* friend requests */
+  friendRequestsBtn:           $("friendRequestsBtn"),
+  friendRequestsModal:         $("friendRequestsModal"),
+  friendRequestsList:          $("friendRequestsList"),
   closeFriendRequestsModalBtn: $("closeFriendRequestsModalBtn"),
+
+  /* global overlay */
+  loadingOverlay: $("loadingOverlay"),
+
+  /* news-feed page */
+  newsfeedBtn:      $("newsfeedBtn"),
+  newsfeedPage:     $("newsfeedPage"),
+  newsfeedContent:  $("newsfeedContent"),
+  allPostsTab:      $("allPostsTab"),
+  latestPostsTab:   $("latestPostsTab"),
 };
