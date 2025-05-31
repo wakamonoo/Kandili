@@ -19,6 +19,7 @@ export async function fetchAndRenderTimelineEntries() {
 
   // Listen to current user's entries
   const currentUserEntriesQuery = db.collection("couples").doc(currentUserUid).collection("entries").orderBy("createdAt", "desc");
+  const friendUids = [currentUserUid, ...(currentUserProfile?.friends || [])];
   unsubscribeEntries = currentUserEntriesQuery.onSnapshot(async (snap) => {
     allEntries = []; // Clear entries before re-populating
 

@@ -59,7 +59,7 @@ export async function loadNewsfeed() {
     }
     
     // Get posts from all friends
-    const friendUids = Array.from(friendProfiles.keys());
+    const friendUids = [currentUserUid, ...Array.from(friendProfiles.keys())];
     let allEntries = [];
     
     for (const friendUid of friendUids) {
