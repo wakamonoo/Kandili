@@ -53,9 +53,6 @@ export function setupAuthListeners() {
       emailLower: user.email.toLowerCase(),
       friends: [],
       pendingRequests: [],
-      friends: [],
-      pendingRequests: [],
-      sentRequests: [],
       sentRequests: [], // NEW FIELD FOR OUTGOING REQUESTS
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     };
@@ -82,17 +79,6 @@ export function setupAuthListeners() {
 
       if (Object.keys(updateData).length > 0) {
         await userProfileDocRef.update(updateData);
-      }
-
-      // Add to profile update section
-      if (!existing.friends) {
-        updateData.friends = [];
-      }
-      if (!existing.pendingRequests) {
-        updateData.pendingRequests = [];
-      }
-      if (!existing.sentRequests) {
-        updateData.sentRequests = [];
       }
     }
 

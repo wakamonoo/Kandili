@@ -1,16 +1,10 @@
 // js/timeline.js
 
-import { db, auth, FieldValue } from "./firebase.js";
-import { DOM } from "./dom.js";
-import {
-  Toast,
-  updateTimelineDisplay,
-  escapeHTML,
-  showLoadingOverlay,
-  hideLoadingOverlay,
-} from "./ui.js";
-import { getCurrentUserProfile, getFriendUserProfiles } from "./auth.js";
-import { beginEditEntry, askDeleteEntry } from "./entries.js";
+import { db, auth, FieldValue } from './firebase.js';
+import { DOM } from './dom.js';
+import { Toast, updateTimelineDisplay, escapeHTML, showLoadingOverlay, hideLoadingOverlay } from './ui.js';
+import { getCurrentUserProfile, getFriendUserProfiles } from './auth.js';
+import { beginEditEntry, askDeleteEntry } from './entries.js';
 
 let unsubscribeEntries = null; // To manage snapshot listeners
 
@@ -24,17 +18,12 @@ export async function fetchAndRenderTimelineEntries() {
   let allEntries = [];
 
   // Listen to current user's entries
-  const currentUserEntriesQuery = db
-    .collection("couples")
-    .doc(currentUserUid)
-    .collection("entries")
-    .orderBy("createdAt", "desc");
-  const friendUids = [currentUserUid, ...(currentUserProfile?.friends || [])];
+  const currentUserEntriesQuery = db.collection("couples").doc(currentUserUid).collection("entries").orderBy("createdAt", "desc");
   unsubscribeEntries = currentUserEntriesQuery.onSnapshot(async (snap) => {
     allEntries = []; // Clear entries before re-populating
 
     // Add current user's entries
-    snap.forEach((doc) => {
+    snap.forEach(doc => {
       allEntries.push({ id: doc.id, ...doc.data(), ownerUid: currentUserUid });
     });
 
@@ -43,22 +32,15 @@ export async function fetchAndRenderTimelineEntries() {
     // but for simplicity, we refetch here.
     if (currentUserProfile && currentUserProfile.friends) {
       for (const friendUid of currentUserProfile.friends) {
-        const friendEntriesSnap = await db
-          .collection("couples")
-          .doc(friendUid)
-          .collection("entries")
-          .orderBy("createdAt", "desc")
-          .get();
-        friendEntriesSnap.forEach((doc) => {
+        const friendEntriesSnap = await db.collection("couples").doc(friendUid).collection("entries").orderBy("createdAt", "desc").get();
+        friendEntriesSnap.forEach(doc => {
           allEntries.push({ id: doc.id, ...doc.data(), ownerUid: friendUid });
         });
       }
     }
 
     // Sort all entries by createdAt timestamp (descending)
-    allEntries.sort(
-      (a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)
-    );
+    allEntries.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
 
     DOM.timelineEntries.innerHTML = "";
     if (allEntries.length === 0) {
@@ -75,15 +57,12 @@ function renderCard(doc) {
   const docId = d.id;
   const ownerUid = d.ownerUid;
 
-  const ownerProfile =
-    ownerUid === auth.currentUser.uid
-      ? getCurrentUserProfile()
-      : getFriendUserProfiles().get(ownerUid);
+  const ownerProfile = (ownerUid === auth.currentUser.uid)
+    ? getCurrentUserProfile()
+    : getFriendUserProfiles().get(ownerUid);
 
   const ownerName = ownerProfile ? ownerProfile.displayName : "Unknown User";
-  const ownerPhoto = ownerProfile
-    ? ownerProfile.photoURL
-    : "https://via.placeholder.com/24";
+  const ownerPhoto = ownerProfile ? ownerProfile.photoURL : "https://via.placeholder.com/24";
 
   const urls = d.imageUrls || (d.imageUrl ? [d.imageUrl] : []);
   const article = document.createElement("article");
@@ -97,14 +76,10 @@ function renderCard(doc) {
       </div>
       <p class="text-sm text-gray-400">${d.date}</p>
       <div class="flex space-x-2 text-gray-400">
-        ${
-          ownerUid === auth.currentUser.uid
-            ? `
+        ${ownerUid === auth.currentUser.uid ? `
           <button class="edit-entry" data-id="${docId}" title="Edit"><i data-feather="edit-2"></i></button>
           <button class="delete-entry" data-id="${docId}" title="Delete"><i data-feather="trash-2"></i></button>
-        `
-            : ""
-        }
+        ` : ''}
       </div>
     </div>
     <p class="mt-1 text-lg whitespace-pre-wrap">${escapeHTML(d.note)}</p>
@@ -136,20 +111,15 @@ function renderCard(doc) {
   // Add event listeners for edit/delete
   if (ownerUid === auth.currentUser.uid) {
     article.querySelector(".edit-entry").onclick = () => beginEditEntry(d); // Pass full data for editing
-    article.querySelector(".delete-entry").onclick = () =>
-      askDeleteEntry(docId);
+    article.querySelector(".delete-entry").onclick = () => askDeleteEntry(docId);
   }
 
   // Reactions
   const likeBtn = article.querySelector(".like-btn");
-  likeBtn.addEventListener("click", async () => {
+  likeBtn.addEventListener('click', async () => {
     const entryId = likeBtn.dataset.entryId;
     const entryOwnerUid = likeBtn.dataset.ownerUid;
-    const entryRef = db
-      .collection("couples")
-      .doc(entryOwnerUid)
-      .collection("entries")
-      .doc(entryId);
+    const entryRef = db.collection("couples").doc(entryOwnerUid).collection("entries").doc(entryId);
 
     const entrySnap = await entryRef.get();
     if (entrySnap.exists) {
@@ -158,7 +128,7 @@ function renderCard(doc) {
       const userLiked = likes.includes(auth.currentUser.uid);
 
       if (userLiked) {
-        likes = likes.filter((uid) => uid !== auth.currentUser.uid); // Unlike
+        likes = likes.filter(uid => uid !== auth.currentUser.uid); // Unlike
       } else {
         likes.push(auth.currentUser.uid); // Like
       }
@@ -167,29 +137,26 @@ function renderCard(doc) {
   });
 
   // Update like count and icon dynamically
-  db.collection("couples")
-    .doc(ownerUid)
-    .collection("entries")
-    .doc(docId)
-    .onSnapshot((snap) => {
-      if (snap.exists) {
-        const data = snap.data();
-        const likes = data.likes || [];
-        const likeCountSpan = article.querySelector(".like-count");
-        likeCountSpan.textContent = likes.length;
+  db.collection("couples").doc(ownerUid).collection("entries").doc(docId).onSnapshot(snap => {
+    if (snap.exists) {
+      const data = snap.data();
+      const likes = data.likes || [];
+      const likeCountSpan = article.querySelector(".like-count");
+      likeCountSpan.textContent = likes.length;
 
-        const likeIcon = likeBtn.querySelector("i");
-        if (likes.includes(auth.currentUser.uid)) {
-          likeIcon.classList.remove("fa-heart-o");
-          likeIcon.classList.add("fas", "fa-heart");
-          likeBtn.classList.add("text-rose-600");
-        } else {
-          likeIcon.classList.remove("fas", "fa-heart");
-          likeIcon.classList.add("fa-heart-o");
-          likeBtn.classList.remove("text-rose-600");
-        }
+      const likeIcon = likeBtn.querySelector('i');
+      if (likes.includes(auth.currentUser.uid)) {
+          likeIcon.classList.remove('fa-heart-o');
+          likeIcon.classList.add('fas', 'fa-heart');
+          likeBtn.classList.add('text-rose-600');
+      } else {
+          likeIcon.classList.remove('fas', 'fa-heart');
+          likeIcon.classList.add('fa-heart-o');
+          likeBtn.classList.remove('text-rose-600');
       }
-    });
+    }
+  });
+
 
   // Comments
   const commentBtn = article.querySelector(".comment-btn");
@@ -208,19 +175,13 @@ function renderCard(doc) {
     if (!commentText) return;
 
     try {
-      await db
-        .collection("couples")
-        .doc(ownerUid)
-        .collection("entries")
-        .doc(docId)
-        .collection("comments")
-        .add({
-          userId: auth.currentUser.uid,
-          userName: auth.currentUser.displayName,
-          userPhoto: auth.currentUser.photoURL,
-          commentText: commentText,
-          createdAt: FieldValue.serverTimestamp(),
-        });
+      await db.collection("couples").doc(ownerUid).collection("entries").doc(docId).collection("comments").add({
+        userId: auth.currentUser.uid,
+        userName: auth.currentUser.displayName,
+        userPhoto: auth.currentUser.photoURL,
+        commentText: commentText,
+        createdAt: FieldValue.serverTimestamp(),
+      });
       commentInput.value = "";
       Toast.fire({ icon: "success", title: "Comment added!" });
     } catch (e) {
@@ -229,78 +190,50 @@ function renderCard(doc) {
   };
 
   // Real-time comments listener
-  db.collection("couples")
-    .doc(ownerUid)
-    .collection("entries")
-    .doc(docId)
-    .collection("comments")
-    .orderBy("createdAt", "asc")
-    .onSnapshot((snap) => {
+  db.collection("couples").doc(ownerUid).collection("entries").doc(docId).collection("comments").orderBy("createdAt", "asc")
+    .onSnapshot(snap => {
       commentsList.innerHTML = "";
-      snap.forEach((commentDoc) => {
+      snap.forEach(commentDoc => {
         const c = commentDoc.data();
         const commentDiv = document.createElement("div");
         commentDiv.className = "flex items-start text-sm";
         commentDiv.innerHTML = `
-          <img src="${c.userPhoto || "https://via.placeholder.com/24"}" alt="${
-          c.userName
-        }" class="w-6 h-6 rounded-full mr-2 mt-1">
+          <img src="${c.userPhoto || 'https://via.placeholder.com/24'}" alt="${c.userName}" class="w-6 h-6 rounded-full mr-2 mt-1">
           <div>
-            <p><span class="font-semibold">${c.userName}:</span> ${escapeHTML(
-          c.commentText
-        )}</p>
-            <p class="text-xs text-gray-400">${
-              c.createdAt
-                ? new Date(c.createdAt.toDate()).toLocaleString()
-                : "Just now"
-            }</p>
+            <p><span class="font-semibold">${c.userName}:</span> ${escapeHTML(c.commentText)}</p>
+            <p class="text-xs text-gray-400">${c.createdAt ? new Date(c.createdAt.toDate()).toLocaleString() : 'Just now'}</p>
           </div>
-          ${
-            c.userId === auth.currentUser.uid
-              ? `<button class="ml-auto text-gray-400 hover:text-red-500 delete-comment-btn" data-comment-id="${commentDoc.id}"><i data-feather="trash-2" class="w-4 h-4"></i></button>`
-              : ""
-          }
+          ${c.userId === auth.currentUser.uid ? `<button class="ml-auto text-gray-400 hover:text-red-500 delete-comment-btn" data-comment-id="${commentDoc.id}"><i data-feather="trash-2" class="w-4 h-4"></i></button>` : ''}
         `;
         commentsList.append(commentDiv);
         feather.replace({ iconNode: commentDiv });
 
         if (c.userId === auth.currentUser.uid) {
-          commentDiv.querySelector(".delete-comment-btn").onclick =
-            async () => {
-              Swal.fire({
-                title: "Delete comment?",
-                text: "You can’t undo this action.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#f43f5e",
-                cancelButtonColor: "#a1a1aa",
-                confirmButtonText: "Yes, delete!",
-              }).then(async (res) => {
-                if (res.isConfirmed) {
-                  try {
-                    await db
-                      .collection("couples")
-                      .doc(ownerUid)
-                      .collection("entries")
-                      .doc(docId)
-                      .collection("comments")
-                      .doc(commentDoc.id)
-                      .delete();
-                    Toast.fire({ icon: "success", title: "Comment deleted!" });
-                  } catch (e) {
-                    Swal.fire({
-                      icon: "error",
-                      title: "Delete failed",
-                      text: e.message,
-                    });
-                  }
-                }
-              });
+            commentDiv.querySelector('.delete-comment-btn').onclick = async () => {
+                Swal.fire({
+                    title: "Delete comment?",
+                    text: "You can’t undo this action.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#f43f5e",
+                    cancelButtonColor: "#a1a1aa",
+                    confirmButtonText: "Yes, delete!",
+                }).then(async (res) => {
+                    if (res.isConfirmed) {
+                        try {
+                            await db.collection("couples").doc(ownerUid).collection("entries").doc(docId).collection("comments").doc(commentDoc.id).delete();
+                            Toast.fire({ icon: "success", title: "Comment deleted!" });
+                        } catch (e) {
+                            Swal.fire({ icon: "error", title: "Delete failed", text: e.message });
+                        }
+                    }
+                });
             };
         }
       });
       feather.replace({ iconNode: commentsList });
     });
+
 
   feather.replace({ iconNode: article });
 }

@@ -1,36 +1,36 @@
 // js/newsfeed.js
-import { db, auth } from "./firebase.js";
-import { DOM } from "./dom.js";
-import { showLoadingOverlay, hideLoadingOverlay } from "./ui.js";
-import { getFriendUserProfiles } from "./auth.js";
+import { db, auth } from './firebase.js';
+import { DOM } from './dom.js';
+import { showLoadingOverlay, hideLoadingOverlay } from './ui.js';
+import { getFriendUserProfiles } from './auth.js';
 
 export function setupNewsfeedListeners() {
   DOM.newsfeedBtn.onclick = () => {
     showNewsfeedModal();
     loadNewsfeed();
   };
-
+  
   DOM.closeNewsfeedModalBtn.onclick = hideNewsfeedModal;
-
+  
   DOM.allPostsTab.onclick = () => {
-    setActiveTab("allPostsTab");
+    setActiveTab('allPostsTab');
     loadNewsfeed();
   };
-
+  
   DOM.latestPostsTab.onclick = () => {
-    setActiveTab("latestPostsTab");
+    setActiveTab('latestPostsTab');
     loadLatestPosts();
   };
 }
 
 function setActiveTab(activeId) {
   // Remove active class from all tabs
-  DOM.allPostsTab.classList.remove("bg-newsfeed-blue", "text-white");
-  DOM.latestPostsTab.classList.remove("bg-newsfeed-blue", "text-white");
-
+  DOM.allPostsTab.classList.remove('bg-newsfeed-blue', 'text-white');
+  DOM.latestPostsTab.classList.remove('bg-newsfeed-blue', 'text-white');
+  
   // Add active class to the clicked tab
   const activeTab = document.getElementById(activeId);
-  activeTab.classList.add("bg-newsfeed-blue", "text-white");
+  activeTab.classList.add('bg-newsfeed-blue', 'text-white');
 }
 
 export function showNewsfeedModal() {
@@ -44,11 +44,11 @@ export function hideNewsfeedModal() {
 export async function loadNewsfeed() {
   showLoadingOverlay();
   DOM.newsfeedContent.innerHTML = "";
-
+  
   try {
     const currentUserUid = auth.currentUser.uid;
     const friendProfiles = getFriendUserProfiles();
-
+    
     if (!friendProfiles.size) {
       DOM.newsfeedContent.innerHTML = `
         <div class="text-center py-8">
@@ -57,31 +57,30 @@ export async function loadNewsfeed() {
       `;
       return;
     }
-
+    
     // Get posts from all friends
-    const friendUids = [currentUserUid, ...Array.from(friendProfiles.keys())];
+    const friendUids = Array.from(friendProfiles.keys());
     let allEntries = [];
-
+    
     for (const friendUid of friendUids) {
-      const friendEntriesSnap = await db
-        .collection("couples")
+      const friendEntriesSnap = await db.collection("couples")
         .doc(friendUid)
         .collection("entries")
         .orderBy("createdAt", "desc")
         .get();
-
-      friendEntriesSnap.forEach((doc) => {
-        allEntries.push({
-          id: doc.id,
-          ...doc.data(),
-          ownerUid: friendUid,
+      
+      friendEntriesSnap.forEach(doc => {
+        allEntries.push({ 
+          id: doc.id, 
+          ...doc.data(), 
+          ownerUid: friendUid 
         });
       });
     }
-
+    
     // Sort by date (newest first)
     allEntries.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
-
+    
     // Render posts
     if (allEntries.length === 0) {
       DOM.newsfeedContent.innerHTML = `
@@ -90,7 +89,7 @@ export async function loadNewsfeed() {
         </div>
       `;
     } else {
-      allEntries.forEach((entry) => {
+      allEntries.forEach(entry => {
         renderNewsfeedPost(entry);
       });
     }
@@ -109,11 +108,11 @@ export async function loadNewsfeed() {
 async function loadLatestPosts() {
   showLoadingOverlay();
   DOM.newsfeedContent.innerHTML = "";
-
+  
   try {
     const currentUserUid = auth.currentUser.uid;
     const friendProfiles = getFriendUserProfiles();
-
+    
     if (!friendProfiles.size) {
       DOM.newsfeedContent.innerHTML = `
         <div class="text-center py-8">
@@ -122,33 +121,32 @@ async function loadLatestPosts() {
       `;
       return;
     }
-
+    
     // Get only the latest post from each friend
     const friendUids = Array.from(friendProfiles.keys());
     let latestEntries = [];
-
+    
     for (const friendUid of friendUids) {
-      const friendEntrySnap = await db
-        .collection("couples")
+      const friendEntrySnap = await db.collection("couples")
         .doc(friendUid)
         .collection("entries")
         .orderBy("createdAt", "desc")
         .limit(1)
         .get();
-
+      
       if (!friendEntrySnap.empty) {
         const doc = friendEntrySnap.docs[0];
-        latestEntries.push({
-          id: doc.id,
-          ...doc.data(),
-          ownerUid: friendUid,
+        latestEntries.push({ 
+          id: doc.id, 
+          ...doc.data(), 
+          ownerUid: friendUid 
         });
       }
     }
-
+    
     // Sort by date (newest first)
     latestEntries.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
-
+    
     // Render posts
     if (latestEntries.length === 0) {
       DOM.newsfeedContent.innerHTML = `
@@ -157,7 +155,7 @@ async function loadLatestPosts() {
         </div>
       `;
     } else {
-      latestEntries.forEach((entry) => {
+      latestEntries.forEach(entry => {
         renderNewsfeedPost(entry);
       });
     }
@@ -176,14 +174,14 @@ async function loadLatestPosts() {
 function renderNewsfeedPost(entry) {
   const friendProfiles = getFriendUserProfiles();
   const ownerProfile = friendProfiles.get(entry.ownerUid);
-
+  
   if (!ownerProfile) return;
-
+  
   const ownerName = ownerProfile.displayName;
   const ownerPhoto = ownerProfile.photoURL || "https://via.placeholder.com/40";
   const entryDate = entry.createdAt.toDate().toLocaleDateString();
   const imageCount = entry.imageUrls?.length || 0;
-
+  
   const postElement = document.createElement("div");
   postElement.className = "bg-white rounded-xl shadow-md p-4 newsfeed-post";
   postElement.innerHTML = `
@@ -197,28 +195,14 @@ function renderNewsfeedPost(entry) {
     
     <p class="mb-3 whitespace-pre-wrap">${entry.note || ""}</p>
     
-    ${
-      imageCount > 0
-        ? `
+    ${imageCount > 0 ? `
       <div class="grid grid-cols-2 gap-2 mb-3">
-        ${entry.imageUrls
-          .slice(0, 2)
-          .map(
-            (url) =>
-              `<img src="${url}" class="rounded-lg object-cover h-40 w-full">`
-          )
-          .join("")}
+        ${entry.imageUrls.slice(0, 2).map(url => 
+          `<img src="${url}" class="rounded-lg object-cover h-40 w-full">`
+        ).join('')}
       </div>
-      ${
-        imageCount > 2
-          ? `<p class="text-sm text-gray-500">+${
-              imageCount - 2
-            } more photos</p>`
-          : ""
-      }
-    `
-        : ""
-    }
+      ${imageCount > 2 ? `<p class="text-sm text-gray-500">+${imageCount - 2} more photos</p>` : ''}
+    ` : ''}
     
     <div class="flex items-center mt-3 pt-3 border-t border-gray-100">
       <button class="like-btn flex items-center text-rose-500 mr-4">
@@ -231,6 +215,6 @@ function renderNewsfeedPost(entry) {
       </button>
     </div>
   `;
-
+  
   DOM.newsfeedContent.appendChild(postElement);
 }

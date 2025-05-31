@@ -270,26 +270,23 @@ async function handleFriendRequest(requestorUid, accept) {
   showLoadingOverlay();
   try {
     await db.runTransaction(async (tx) => {
-      const currentRef = db.collection("users").doc(currentUid);
-      const requestorRef = db.collection("users").doc(requestorUid);
-      
       if (accept) {
-        // Add each other as friends
         tx.update(currentRef, {
-          friends: FieldValue.arrayUnion(requestorUid),
-          pendingRequests: FieldValue.arrayRemove(requestorUid),
+          friends: firebase.firestore.FieldValue.arrayUnion(requestorUid),
+          pendingRequests:
+            firebase.firestore.FieldValue.arrayRemove(requestorUid),
         });
         tx.update(requestorRef, {
-          friends: FieldValue.arrayUnion(currentUid),
-          sentRequests: FieldValue.arrayRemove(currentUid),
+          friends: firebase.firestore.FieldValue.arrayUnion(currentUid),
+          sentRequests: firebase.firestore.FieldValue.arrayRemove(currentUid),
         });
       } else {
-        // Reject request
         tx.update(currentRef, {
-          pendingRequests: FieldValue.arrayRemove(requestorUid)
+          pendingRequests:
+            firebase.firestore.FieldValue.arrayRemove(requestorUid),
         });
         tx.update(requestorRef, {
-          sentRequests: FieldValue.arrayRemove(currentUid)
+          sentRequests: firebase.firestore.FieldValue.arrayRemove(currentUid),
         });
       }
     });
