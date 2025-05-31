@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tsunagari – Newsfeed</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "newsfeed-blue": "#3b82f6",
+            },
+          },
+        },
+      };
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+      .newsfeed-post {
+        transition: all 0.3s ease;
+      }
+      .newsfeed-post:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+      .tab-button {
+        transition: all 0.2s ease;
+      }
+      .tab-button.active {
+        background-color: #3b82f6;
+        color: white;
+      }
+    </style>
+  </head>
+
+  <body
+    class="min-h-screen bg-rose-50 text-gray-800 flex flex-col"
+    style="font-family: 'Nunito', sans-serif"
+  >
+    <header class="bg-white shadow-md">
+      <div
+        class="mx-auto max-w-3xl px-4 py-3 flex justify-between items-center"
+      >
+        <a href="index.html" class="flex items-center">
+          <img src="images/logo.png" alt="logo" class="h-10" />
+        </a>
+        <h1 class="text-xl font-semibold">Friends' Newsfeed</h1>
+        <div class="flex space-x-2">
+          <button
+            id="allPostsTab"
+            class="tab-button px-3 py-1 rounded-md bg-gray-100 text-gray-700 active"
+          >
+            All Posts
+          </button>
+          <button
+            id="latestPostsTab"
+            class="tab-button px-3 py-1 rounded-md bg-gray-100 text-gray-700"
+          >
+            Latest
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div
+      id="loadingOverlay"
+      class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[100] hidden"
+    >
+      <div
+        class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-rose-500"
+      ></div>
+    </div>
+
+    <main
+      id="newsfeedContent"
+      class="flex-1 w-full max-w-3xl mx-auto p-4 space-y-4 overflow-y-auto"
+    >
+      </main>
+
+    <script type="module" src="./js/newsfeed.js"></script>
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>
