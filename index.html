@@ -151,6 +151,7 @@
       </button>
     </div>
 
+    <!-- Entry Modal -->
     <div
       id="entryModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
@@ -201,6 +202,7 @@
       </div>
     </div>
 
+    <!-- Add Friend Modal -->
     <div
       id="addFriendModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
@@ -228,6 +230,7 @@
       </div>
     </div>
 
+    <!-- Friend Requests Modal -->
     <div
       id="friendRequestsModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
@@ -241,6 +244,48 @@
         <div class="flex justify-end">
           <button
             id="closeFriendRequestsModalBtn"
+            class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Newsfeed Modal -->
+    <div
+      id="newsfeedModal"
+      class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
+    >
+      <div class="bg-white w-11/12 max-w-2xl rounded-2xl shadow-xl p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">Friends' Newsfeed</h2>
+          <div class="flex space-x-2">
+            <button
+              id="allPostsTab"
+              class="tab-button px-3 py-1 rounded-md bg-gray-100 text-gray-700 active"
+            >
+              All Posts
+            </button>
+            <button
+              id="latestPostsTab"
+              class="tab-button px-3 py-1 rounded-md bg-gray-100 text-gray-700"
+            >
+              Latest
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="newsfeedContent"
+          class="space-y-4 max-h-[70vh] overflow-y-auto"
+        >
+          <!-- Newsfeed posts will be inserted here -->
+        </div>
+
+        <div class="flex justify-end mt-4">
+          <button
+            id="closeNewsfeedModalBtn"
             class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
           >
             Close

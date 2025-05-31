@@ -15,29 +15,51 @@ import { beginEditEntry, askDeleteEntry } from "./entries.js";
 let unsubscribeEntries = null; // To manage snapshot listeners
 
 export async function fetchAndRenderTimelineEntries() {
-  if (unsubscribeEntries) unsubscribeEntries(); // Remove previous listener
+  if (unsubscribeEntries) unsubscribeEntries(); // Unsubscribe from previous listeners
 
   const currentUserUid = auth.currentUser.uid;
+  const currentUserProfile = getCurrentUserProfile();
+  const friendUserProfiles = getFriendUserProfiles();
 
+  let allEntries = [];
+
+  // Listen to current user's entries
   const currentUserEntriesQuery = db
     .collection("couples")
     .doc(currentUserUid)
     .collection("entries")
     .orderBy("createdAt", "desc");
+  const friendUids = [currentUserUid, ...(currentUserProfile?.friends || [])];
+  unsubscribeEntries = currentUserEntriesQuery.onSnapshot(async (snap) => {
+    allEntries = []; // Clear entries before re-populating
 
-  unsubscribeEntries = currentUserEntriesQuery.onSnapshot((snap) => {
-    let allEntries = [];
-
+    // Add current user's entries
     snap.forEach((doc) => {
       allEntries.push({ id: doc.id, ...doc.data(), ownerUid: currentUserUid });
     });
 
-    // Sort by date (descending)
+    // Add friends' entries (refetch on each change to current user's entries or profile)
+    // This could be optimized for very large friend lists/frequent updates by having separate listeners per friend,
+    // but for simplicity, we refetch here.
+    if (currentUserProfile && currentUserProfile.friends) {
+      for (const friendUid of currentUserProfile.friends) {
+        const friendEntriesSnap = await db
+          .collection("couples")
+          .doc(friendUid)
+          .collection("entries")
+          .orderBy("createdAt", "desc")
+          .get();
+        friendEntriesSnap.forEach((doc) => {
+          allEntries.push({ id: doc.id, ...doc.data(), ownerUid: friendUid });
+        });
+      }
+    }
+
+    // Sort all entries by createdAt timestamp (descending)
     allEntries.sort(
       (a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)
     );
 
-    // Render
     DOM.timelineEntries.innerHTML = "";
     if (allEntries.length === 0) {
       updateTimelineDisplay("noData");
