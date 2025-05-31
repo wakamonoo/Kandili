@@ -7,24 +7,24 @@ export const DOM = {
   signOutBtn: $("signOutBtn"),
   timeline: $("timeline"),
   timelineEntries: $("timelineEntries"),
-  openModalBtn: $("openModalBtn"), // Renamed for consistency with HTML
+  openModalBtn: $("openModalBtn"),
   addFriendBtn: $("addFriendBtn"),
   friendRequestsBtn: $("friendRequestsBtn"),
   entryModal: $("entryModal"),
   cancelBtn: $("cancelBtn"),
-  saveEntryBtn: $("saveEntryBtn"), // Renamed for clarity
+  saveEntryBtn: $("saveEntryBtn"),
   loadingOverlay: $("loadingOverlay"),
   welcomeMessage: $("welcomeMessage"),
   noDataMessage: $("noDataMessage"),
-  entryDateInput: $("entryDate"), // Renamed for clarity
-  entryNoteInput: $("entryNote"), // Renamed for clarity
-  entryImgInput: $("entryImg"), // Renamed for clarity
+  entryDateInput: $("entryDate"),
+  entryNoteInput: $("entryNote"),
+  entryImgInput: $("entryImg"),
 
   // Newsfeed elements
   newsfeedBtn: $("newsfeedBtn"),
-  newsfeedModal: $("newsfeedModal"),
+  // newsfeedModal: $("newsfeedModal"), // REMOVED - this is for the old modal
   newsfeedContent: $("newsfeedContent"),
-  closeNewsfeedModalBtn: $("closeNewsfeedModalBtn"),
+  // closeNewsfeedModalBtn: $("closeNewsfeedModalBtn"), // REMOVED - this is for the old modal
   allPostsTab: $("allPostsTab"),
   latestPostsTab: $("latestPostsTab"),
 

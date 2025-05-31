@@ -1,35 +1,69 @@
-import { db, auth, FieldValue } from "./firebase.js"; // Import FieldValue
-import { DOM } from "./dom.js";
-import { showLoadingOverlay, hideLoadingOverlay, Toast, escapeHTML } from "./ui.js"; // Import Toast and escapeHTML
-import { getCurrentUserProfile, getFriendUserProfiles } from "./auth.js"; // Import getCurrentUserProfile
+// js/newsfeed.js
+import { db, auth, FieldValue } from "./firebase.js";
+import {
+  showLoadingOverlay,
+  hideLoadingOverlay,
+  Toast,
+  escapeHTML,
+} from "./ui.js";
+import { getCurrentUserProfile, getFriendUserProfiles } from "./auth.js";
+
+// Make sure DOM elements are accessible.
+// If you have a separate dom.js, ensure these are exported there.
+// Otherwise, define them here or pass them.
+// For this example, I'll assume they are available via DOM import.
+import { DOM } from "./dom.js"; // Ensure this import is correct and DOM has the elements
 
 export function setupNewsfeedListeners() {
-  // These listeners will now be on the newsfeed.html page
-  DOM.allPostsTab.onclick = () => {
-    setActiveTab("allPostsTab");
-    loadNewsfeed();
-  };
-
-  DOM.latestPostsTab.onclick = () => {
-    setActiveTab("latestPostsTab");
-    loadLatestPosts();
-  };
-
-  // Initial load when the newsfeed page is accessed
-  setActiveTab("allPostsTab"); // Set default tab to "All Posts"
+  // Set the initial active tab and load content when the page loads
+  setActiveTab("allPostsTab");
   loadNewsfeed();
+
+  // Add event listeners for the tabs
+  if (DOM.allPostsTab) {
+    // Defensive check
+    DOM.allPostsTab.onclick = () => {
+      setActiveTab("allPostsTab");
+      loadNewsfeed();
+    };
+  }
+
+  if (DOM.latestPostsTab) {
+    // Defensive check
+    DOM.latestPostsTab.onclick = () => {
+      setActiveTab("latestPostsTab");
+      loadLatestPosts();
+    };
+  }
 }
 
 function setActiveTab(activeId) {
-  // Remove active class from all tabs
-  DOM.allPostsTab.classList.remove("bg-newsfeed-blue", "text-white");
-  DOM.latestPostsTab.classList.remove("bg-newsfeed-blue", "text-white");
+  // Get all tab buttons
+  const allTabs = [DOM.allPostsTab, DOM.latestPostsTab]; // Use DOM references
+
+  allTabs.forEach((tab) => {
+    if (tab) {
+      // Ensure tab element exists
+      // Remove active classes
+      tab.classList.remove("bg-newsfeed-blue", "text-white");
+      // Ensure default styling is applied if not active
+      tab.classList.add("bg-gray-100", "text-gray-700");
+    }
+  });
 
   // Add active class to the clicked tab
-  const activeTab = document.getElementById(activeId);
-  activeTab.classList.add("bg-newsfeed-blue", "text-white");
+  const activeTab = document.getElementById(activeId); // Still use getElementById for consistency with activeId
+  if (activeTab) {
+    // Ensure activeTab element exists
+    activeTab.classList.remove("bg-gray-100", "text-gray-700"); // Remove default before adding active
+    activeTab.classList.add("bg-newsfeed-blue", "text-white");
+  }
 }
 
+// ... (rest of your loadNewsfeed, loadLatestPosts, renderNewsfeedPost functions remain the same)
+// The existing loadNewsfeed and loadLatestPosts functions should be fine.
+// The renderNewsfeedPost also should be fine.
+// I'm omitting them for brevity but assume they are in your newsfeed.js
 export async function loadNewsfeed() {
   showLoadingOverlay();
   DOM.newsfeedContent.innerHTML = "";
@@ -38,17 +72,18 @@ export async function loadNewsfeed() {
     const currentUserUid = auth.currentUser.uid;
     const friendProfiles = getFriendUserProfiles();
 
-    if (!friendProfiles.size && currentUserUid !== auth.currentUser.uid) { // Check if no friends and not current user's own posts
-      DOM.newsfeedContent.innerHTML = `
-        <div class="text-center py-8">
-          <p class="text-gray-500">Add friends to see their posts!</p>
-        </div>
-      `;
-      return;
+    // Check if no friends and not current user's own posts
+    // This condition might be overly restrictive if you want to see your own posts even without friends
+    // Let's adjust to always show current user's posts if they exist
+    const friendUids = [currentUserUid, ...Array.from(friendProfiles.keys())];
+
+    if (friendUids.length === 1 && !friendProfiles.size) {
+      // Only current user, no friends
+      // You might want to load current user's posts here even if they have no friends
+      // The logic below will handle it, but if you want a specific message for no friends AND no posts
+      // you'd need to adjust this. For now, we proceed to load their own posts.
     }
 
-    // Get posts from current user and all friends
-    const friendUids = [currentUserUid, ...Array.from(friendProfiles.keys())];
     let allEntries = [];
 
     for (const friendUid of friendUids) {
@@ -69,7 +104,9 @@ export async function loadNewsfeed() {
     }
 
     // Sort by date (newest first)
-    allEntries.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+    allEntries.sort(
+      (a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)
+    );
 
     // Render posts
     if (allEntries.length === 0) {
@@ -106,7 +143,7 @@ export async function loadLatestPosts() {
     if (!friendProfiles.size) {
       DOM.newsfeedContent.innerHTML = `
         <div class="text-center py-8">
-          <p class="text-gray-500">Add friends to see their posts!</p>
+          <p class="text-gray-500">Add friends to see their latest posts!</p>
         </div>
       `;
       return;
@@ -136,7 +173,9 @@ export async function loadLatestPosts() {
     }
 
     // Sort by date (newest first)
-    latestEntries.sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0));
+    latestEntries.sort(
+      (a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)
+    );
 
     // Render posts
     if (latestEntries.length === 0) {
@@ -171,13 +210,22 @@ function renderNewsfeedPost(entry) {
       ? currentUserProfile
       : friendProfiles.get(entry.ownerUid);
 
-  if (!ownerProfile) return;
+  if (!ownerProfile) {
+    console.warn("Owner profile not found for entry:", entry);
+    return;
+  }
 
   const ownerName = ownerProfile.displayName;
   const ownerPhoto = ownerProfile.photoURL || "https://via.placeholder.com/40";
   const entryDate = entry.createdAt
-    ? entry.createdAt.toDate().toLocaleDateString()
-    : "Unknown Date"; // Handle cases where createdAt might be missing
+    ? entry.createdAt
+        .toDate()
+        .toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+    : "Unknown Date";
   const imageCount = entry.imageUrls?.length || 0;
 
   const postElement = document.createElement("div");
@@ -281,14 +329,15 @@ function renderNewsfeedPost(entry) {
         likeCountSpan.textContent = likes.length;
 
         const likeIcon = likeBtn.querySelector("i");
+        // Check if the current user has liked this post
         if (likes.includes(auth.currentUser.uid)) {
-          likeIcon.classList.remove("fa-heart-o");
-          likeIcon.classList.add("fas", "fa-heart");
-          likeBtn.classList.add("text-rose-600");
+          likeIcon.classList.remove("fa-heart-o"); // Remove outline heart
+          likeIcon.classList.add("fas", "fa-heart"); // Add solid heart
+          likeBtn.classList.add("text-rose-600"); // Add active color
         } else {
-          likeIcon.classList.remove("fas", "fa-heart");
-          likeIcon.classList.add("fa-heart-o");
-          likeBtn.classList.remove("text-rose-600");
+          likeIcon.classList.remove("fas", "fa-heart"); // Remove solid heart
+          likeIcon.classList.add("fa-heart-o"); // Add outline heart
+          likeBtn.classList.remove("text-rose-600"); // Remove active color
         }
       }
     });
@@ -367,37 +416,38 @@ function renderNewsfeedPost(entry) {
         feather.replace({ iconNode: commentDiv });
 
         if (c.userId === auth.currentUser.uid) {
-          commentDiv.querySelector(".delete-comment-btn").onclick = async () => {
-            Swal.fire({
-              title: "Delete comment?",
-              text: "You can’t undo this action.",
-              icon: "warning",
-              showCancelButton: true,
-              confirmButtonColor: "#f43f5e",
-              cancelButtonColor: "#a1a1aa",
-              confirmButtonText: "Yes, delete!",
-            }).then(async (res) => {
-              if (res.isConfirmed) {
-                try {
-                  await db
-                    .collection("couples")
-                    .doc(entry.ownerUid)
-                    .collection("entries")
-                    .doc(entry.id)
-                    .collection("comments")
-                    .doc(commentDoc.id)
-                    .delete();
-                  Toast.fire({ icon: "success", title: "Comment deleted!" });
-                } catch (e) {
-                  Swal.fire({
-                    icon: "error",
-                    title: "Delete failed",
-                    text: e.message,
-                  });
+          commentDiv.querySelector(".delete-comment-btn").onclick =
+            async () => {
+              Swal.fire({
+                title: "Delete comment?",
+                text: "You can’t undo this action.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#f43f5e",
+                cancelButtonColor: "#a1a1aa",
+                confirmButtonText: "Yes, delete!",
+              }).then(async (res) => {
+                if (res.isConfirmed) {
+                  try {
+                    await db
+                      .collection("couples")
+                      .doc(entry.ownerUid)
+                      .collection("entries")
+                      .doc(entry.id)
+                      .collection("comments")
+                      .doc(commentDoc.id)
+                      .delete();
+                    Toast.fire({ icon: "success", title: "Comment deleted!" });
+                  } catch (e) {
+                    Swal.fire({
+                      icon: "error",
+                      title: "Delete failed",
+                      text: e.message,
+                    });
+                  }
                 }
-              }
-            });
-          };
+              });
+            };
         }
       });
       feather.replace({ iconNode: commentsList });
