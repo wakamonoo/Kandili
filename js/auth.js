@@ -20,7 +20,7 @@ export function setupAuthListeners() {
     auth
       .signInWithPopup(new firebase.auth.GoogleAuthProvider())
       .catch((e) =>
-        Swal.fire({ icon: "error", title: "Sign‑in failed", text: e.message })
+        Swal.fire({ icon: "error", title: "Sign-in failed", text: e.message })
       )
       .finally(() => hideLoadingOverlay());
   };
@@ -35,6 +35,10 @@ export function setupAuthListeners() {
     if (!user) {
       currentUserProfile = null;
       friendUserProfiles.clear();
+      // Trigger menu update after state change
+      if (window.updateMenuVisibility) {
+        window.updateMenuVisibility();
+      }
       return;
     }
 
@@ -89,11 +93,19 @@ export function setupAuthListeners() {
       await fetchFriendProfiles(currentUserProfile.friends);
       // Re-render timeline to reflect potential friend changes or new content
       await fetchAndRenderTimelineEntries();
+      // Trigger menu update after profile data is loaded
+      if (window.updateMenuVisibility) {
+        window.updateMenuVisibility();
+      }
     });
 
     // Initial fetch and render of timeline entries
     await fetchAndRenderTimelineEntries();
     hideLoadingOverlay();
+    // Trigger menu update after initial auth state is fully processed
+    if (window.updateMenuVisibility) {
+      window.updateMenuVisibility();
+    }
   });
 }
 
@@ -104,6 +116,7 @@ function setAuthUI(user) {
   DOM.openModalBtn.classList.toggle("hidden", !isLoggedIn);
   DOM.addFriendBtn.classList.toggle("hidden", !isLoggedIn);
   DOM.friendRequestsBtn.classList.toggle("hidden", !isLoggedIn);
+  DOM.newsfeedBtn.classList.toggle("hidden", !isLoggedIn); // Keep this line as well
   DOM.timelineEntries.innerHTML = ""; // Clear entries on auth state change
   if (!isLoggedIn) updateTimelineDisplay("welcome");
   else updateTimelineDisplay("loading");
