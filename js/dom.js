@@ -1,40 +1,49 @@
 // js/dom.js
 
-const $ = (id) => document.getElementById(id);
+// A helper function to safely get an element by ID
+const safeGetElement = (id) => {
+    const element = document.getElementById(id);
+    // You can uncomment the console.warn if you want to be notified
+    // when an element is not found, useful for debugging.
+    // if (!element) {
+    //     console.warn(`DOM element with ID "${id}" not found on this page.`);
+    // }
+    return element;
+};
 
 export const DOM = {
-  signInBtn: $("signInBtn"),
-  signOutBtn: $("signOutBtn"),
-  timeline: $("timeline"),
-  timelineEntries: $("timelineEntries"),
-  openModalBtn: $("openModalBtn"),
-  addFriendBtn: $("addFriendBtn"),
-  friendRequestsBtn: $("friendRequestsBtn"),
-  entryModal: $("entryModal"),
-  cancelBtn: $("cancelBtn"),
-  saveEntryBtn: $("saveEntryBtn"),
-  loadingOverlay: $("loadingOverlay"),
-  welcomeMessage: $("welcomeMessage"),
-  noDataMessage: $("noDataMessage"),
-  entryDateInput: $("entryDate"),
-  entryNoteInput: $("entryNote"),
-  entryImgInput: $("entryImg"),
+    // Shared elements (buttons that might navigate or overlays)
+    signInBtn: safeGetElement("signInBtn"),
+    signOutBtn: safeGetElement("signOutBtn"),
+    loadingOverlay: safeGetElement("loadingOverlay"),
+    welcomeMessage: safeGetElement("welcomeMessage"), // Could be on both if dynamic
+    newsfeedBtn: safeGetElement("newsfeedBtn"), // This button is typically on index.html to navigate
 
-  // Newsfeed elements
-  newsfeedBtn: $("newsfeedBtn"),
-  // newsfeedModal: $("newsfeedModal"), // REMOVED - this is for the old modal
-  newsfeedContent: $("newsfeedContent"),
-  // closeNewsfeedModalBtn: $("closeNewsfeedModalBtn"), // REMOVED - this is for the old modal
-  allPostsTab: $("allPostsTab"),
-  latestPostsTab: $("latestPostsTab"),
+    // Index.html specific elements
+    timeline: safeGetElement("timeline"),
+    timelineEntries: safeGetElement("timelineEntries"),
+    openModalBtn: safeGetElement("openModalBtn"),
+    addFriendBtn: safeGetElement("addFriendBtn"),
+    friendRequestsBtn: safeGetElement("friendRequestsBtn"),
+    entryModal: safeGetElement("entryModal"),
+    cancelBtn: safeGetElement("cancelBtn"),
+    saveEntryBtn: safeGetElement("saveEntryBtn"),
+    noDataMessage: safeGetElement("noDataMessage"),
+    entryDateInput: safeGetElement("entryDate"),
+    entryNoteInput: safeGetElement("entryNote"),
+    entryImgInput: safeGetElement("entryImg"),
 
-  // New DOM references for friend features
-  addFriendModal: $("addFriendModal"),
-  addFriendSearchInput: $("addFriendSearchInput"),
-  addFriendSearchResults: $("addFriendSearchResults"),
-  closeAddFriendModalBtn: $("closeAddFriendModalBtn"),
+    // Modals (expected to be on index.html)
+    addFriendModal: safeGetElement("addFriendModal"),
+    addFriendSearchInput: safeGetElement("addFriendSearchInput"),
+    addFriendSearchResults: safeGetElement("addFriendSearchResults"),
+    closeAddFriendModalBtn: safeGetElement("closeAddFriendModalBtn"),
+    friendRequestsModal: safeGetElement("friendRequestsModal"),
+    friendRequestsList: safeGetElement("friendRequestsList"),
+    closeFriendRequestsModalBtn: safeGetElement("closeFriendRequestsModalBtn"),
 
-  friendRequestsModal: $("friendRequestsModal"),
-  friendRequestsList: $("friendRequestsList"),
-  closeFriendRequestsModalBtn: $("closeFriendRequestsModalBtn"),
+    // Newsfeed.html specific elements (these should only exist on newsfeed.html)
+    newsfeedContent: safeGetElement("newsfeedContent"),
+    allPostsTab: safeGetElement("allPostsTab"),
+    latestPostsTab: safeGetElement("latestPostsTab"),
 };
