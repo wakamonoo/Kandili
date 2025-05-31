@@ -1,17 +1,13 @@
 // js/friends.js
 import { db, auth, FieldValue } from "./firebase.js";
 import { DOM } from "./dom.js";
-import {
-  Toast,
-  showLoadingOverlay,
-  hideLoadingOverlay,
-  hideAddFriendModal,
-} from "./ui.js";
+import { Toast, showLoadingOverlay, hideLoadingOverlay } from "./ui.js";
 import { getCurrentUserProfile } from "./auth.js";
 
 let searchTimeout;
 
 export function setupFriendListeners() {
+  /* ---------- "Add friend" modal ---------- */
   DOM.addFriendBtn.onclick = () => {
     DOM.addFriendModal.classList.remove("hidden");
     DOM.addFriendSearchInput.value = "";
@@ -27,6 +23,7 @@ export function setupFriendListeners() {
     searchTimeout = setTimeout(() => handleFriendSearch(e), 300);
   };
 
+  /* ---------- "Friend requests" modal ---------- */
   DOM.friendRequestsBtn.onclick = async () => {
     DOM.friendRequestsModal.classList.remove("hidden");
     await loadFriendRequests();
@@ -56,12 +53,14 @@ async function handleFriendSearch(e) {
   try {
     const usersRef = db.collection("users");
 
+    // Search by display name
     const nameQuery = usersRef
       .where("displayNameLower", ">=", term)
       .where("displayNameLower", "<=", term + "\uf8ff")
       .limit(10)
       .get();
 
+    // Search by email
     const emailQuery = usersRef
       .where("emailLower", ">=", term)
       .where("emailLower", "<=", term + "\uf8ff")
@@ -72,7 +71,7 @@ async function handleFriendSearch(e) {
 
     hideLoadingOverlay();
 
-    // Merge and deduplicate results
+    // Merge results and remove duplicates
     const docs = [];
     const seen = new Set();
 
@@ -111,13 +110,12 @@ function renderSearchResults(userDocs) {
 
   userDocs.forEach((doc) => {
     const data = doc.data();
-    if (data.uid === auth.currentUser.uid) return;
+    if (data.uid === auth.currentUser.uid) return; // skip self
 
+    // Use the new sentRequests field to track outgoing requests
     const isFriend = profile.friends.includes(data.uid);
-    const isPendingSent = profile.pendingRequests.includes(data.uid);
-    const isPendingReceived = data.pendingRequests?.includes(
-      auth.currentUser.uid
-    );
+    const isPendingSent = profile.sentRequests?.includes(data.uid);
+    const isPendingReceived = profile.pendingRequests?.includes(data.uid);
 
     const row = document.createElement("div");
     row.className =
@@ -137,7 +135,7 @@ function renderSearchResults(userDocs) {
           isFriend
             ? '<span class="text-green-500 text-sm">Friends</span>'
             : isPendingReceived
-            ? '<button class="px-3 py-1 rounded-md bg-rose-200 text-rose-800 text-sm" disabled>Request Sent</button>'
+            ? '<button class="px-3 py-1 rounded-md bg-rose-200 text-rose-800 text-sm" disabled>Request Sent To You</button>'
             : isPendingSent
             ? '<button class="px-3 py-1 rounded-md bg-gray-200 text-gray-600 text-sm" disabled>Pending</button>'
             : `<button class="send-friend-request-btn px-3 py-1 rounded-md bg-rose-500 text-white hover:bg-rose-600 text-sm"
@@ -163,18 +161,26 @@ function renderSearchResults(userDocs) {
 async function sendFriendRequest(targetUid) {
   const currentUid = auth.currentUser.uid;
   const targetRef = db.collection("users").doc(targetUid);
+  const currentUserRef = db.collection("users").doc(currentUid);
 
   try {
+    // Update target user's pendingRequests
     await targetRef.update({
       pendingRequests: FieldValue.arrayUnion(currentUid),
     });
+
+    // Update current user's sentRequests
+    await currentUserRef.update({
+      sentRequests: FieldValue.arrayUnion(targetUid),
+    });
+
     Toast.fire({ icon: "success", title: "Friend request sent!" });
   } catch (err) {
     console.error("Send request error:", err);
     Swal.fire({
       icon: "error",
       title: "Failed to send request",
-      text: err.message,
+      text: err.message || "Please try again later",
     });
   }
 }
@@ -263,27 +269,39 @@ async function handleFriendRequest(requestorUid, accept) {
   showLoadingOverlay();
   try {
     if (accept) {
+      // Accept request - add to friends list
       await currentRef.update({
         friends: FieldValue.arrayUnion(requestorUid),
         pendingRequests: FieldValue.arrayRemove(requestorUid),
       });
+
       await requestorRef.update({
         friends: FieldValue.arrayUnion(currentUid),
+        sentRequests: FieldValue.arrayRemove(currentUid),
       });
+
       Toast.fire({ icon: "success", title: "Friend request accepted!" });
     } else {
+      // Reject request
       await currentRef.update({
         pendingRequests: FieldValue.arrayRemove(requestorUid),
       });
+
+      await requestorRef.update({
+        sentRequests: FieldValue.arrayRemove(currentUid),
+      });
+
       Toast.fire({ icon: "info", title: "Friend request rejected" });
     }
+
+    // Reload requests list
     await loadFriendRequests();
   } catch (err) {
     console.error("Handle request error:", err);
     Swal.fire({
       icon: "error",
       title: "Action failed",
-      text: err.message,
+      text: err.message || "Please try again later",
     });
   } finally {
     hideLoadingOverlay();

@@ -1,13 +1,13 @@
 // js/main.js
-
 import { setupAuthListeners } from './auth.js';
 import { setupEntryModalListeners } from './entries.js';
 import { setupFriendListeners } from './friends.js';
-// No need to import Firebase here directly, as it's handled by `firebase.js` which is imported by other modules.
+import { setupNewsfeedListeners } from './newsfeed.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   setupAuthListeners();
   setupEntryModalListeners();
   setupFriendListeners();
-  feather.replace(); // Initialize feather icons once DOM is loaded
+  setupNewsfeedListeners();
+  feather.replace();
 });

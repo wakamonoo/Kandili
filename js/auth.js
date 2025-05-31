@@ -1,8 +1,12 @@
 // js/auth.js
-import { auth, db } from './firebase.js';
-import { DOM } from './dom.js';
-import { updateTimelineDisplay, showLoadingOverlay, hideLoadingOverlay } from './ui.js';
-import { fetchAndRenderTimelineEntries } from './timeline.js';
+import { auth, db } from "./firebase.js";
+import { DOM } from "./dom.js";
+import {
+  updateTimelineDisplay,
+  showLoadingOverlay,
+  hideLoadingOverlay,
+} from "./ui.js";
+import { fetchAndRenderTimelineEntries } from "./timeline.js";
 
 let currentUserProfile = null;
 let friendUserProfiles = new Map();
@@ -49,36 +53,45 @@ export function setupAuthListeners() {
       emailLower: user.email.toLowerCase(),
       friends: [],
       pendingRequests: [],
+      sentRequests: [], // NEW FIELD FOR OUTGOING REQUESTS
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     };
 
     if (!userProfileSnap.exists) {
       await userProfileDocRef.set(profileData);
     } else {
-      // Update existing profile if missing lowercase fields
+      // Add missing fields to existing profiles
       const updateData = {};
       const existing = userProfileSnap.data();
-      
-      if (!existing.displayNameLower) {
-        updateData.displayNameLower = profileData.displayNameLower;
+
+      if (!existing.displayNameLower && existing.displayName) {
+        updateData.displayNameLower = existing.displayName.toLowerCase();
       }
-      
-      if (!existing.emailLower) {
-        updateData.emailLower = profileData.emailLower;
+
+      if (!existing.emailLower && existing.email) {
+        updateData.emailLower = existing.email.toLowerCase();
       }
-      
+
+      // Initialize sentRequests if missing
+      if (!existing.sentRequests) {
+        updateData.sentRequests = [];
+      }
+
       if (Object.keys(updateData).length > 0) {
         await userProfileDocRef.update(updateData);
       }
     }
 
-    // Listen for real-time updates
+    // Listen for real-time updates to the current user's profile
     userProfileDocRef.onSnapshot(async (snap) => {
       currentUserProfile = snap.data();
+      // Update friend profiles if friends list changes
       await fetchFriendProfiles(currentUserProfile.friends);
+      // Re-render timeline to reflect potential friend changes or new content
       await fetchAndRenderTimelineEntries();
     });
 
+    // Initial fetch and render of timeline entries
     await fetchAndRenderTimelineEntries();
     hideLoadingOverlay();
   });
@@ -91,7 +104,7 @@ function setAuthUI(user) {
   DOM.openModalBtn.classList.toggle("hidden", !isLoggedIn);
   DOM.addFriendBtn.classList.toggle("hidden", !isLoggedIn);
   DOM.friendRequestsBtn.classList.toggle("hidden", !isLoggedIn);
-  DOM.timelineEntries.innerHTML = "";
+  DOM.timelineEntries.innerHTML = ""; // Clear entries on auth state change
   if (!isLoggedIn) updateTimelineDisplay("welcome");
   else updateTimelineDisplay("loading");
 }
@@ -99,11 +112,12 @@ function setAuthUI(user) {
 async function fetchFriendProfiles(friendUids) {
   friendUserProfiles.clear();
   if (friendUids && friendUids.length > 0) {
-    const friendSnaps = await db.collection("users")
-      .where(firebase.firestore.FieldPath.documentId(), 'in', friendUids)
+    const friendSnaps = await db
+      .collection("users")
+      .where(firebase.firestore.FieldPath.documentId(), "in", friendUids)
       .get();
-      
-    friendSnaps.forEach(doc => {
+
+    friendSnaps.forEach((doc) => {
       friendUserProfiles.set(doc.id, doc.data());
     });
   }

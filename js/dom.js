@@ -20,6 +20,14 @@ export const DOM = {
   entryNoteInput: $("entryNote"), // Renamed for clarity
   entryImgInput: $("entryImg"), // Renamed for clarity
 
+  // Newsfeed elements
+  newsfeedBtn: $("newsfeedBtn"),
+  newsfeedModal: $("newsfeedModal"),
+  newsfeedContent: $("newsfeedContent"),
+  closeNewsfeedModalBtn: $("closeNewsfeedModalBtn"),
+  allPostsTab: $("allPostsTab"),
+  latestPostsTab: $("latestPostsTab"),
+
   // New DOM references for friend features
   addFriendModal: $("addFriendModal"),
   addFriendSearchInput: $("addFriendSearchInput"),

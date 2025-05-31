@@ -84,3 +84,11 @@ export function showFriendRequestsModal() {
 export function hideFriendRequestsModal() {
   DOM.friendRequestsModal.classList.add("hidden");
 }
+
+export function showNewsfeedModal() {
+  DOM.newsfeedModal.classList.remove("hidden");
+}
+
+export function hideNewsfeedModal() {
+  DOM.newsfeedModal.classList.add("hidden");
+}
