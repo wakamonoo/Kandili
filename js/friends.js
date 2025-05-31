@@ -263,38 +263,38 @@ function renderRequestRow(data) {
 
 async function handleFriendRequest(requestorUid, accept) {
   const currentUid = auth.currentUser.uid;
+  const db = firebase.firestore();
   const currentRef = db.collection("users").doc(currentUid);
   const requestorRef = db.collection("users").doc(requestorUid);
 
   showLoadingOverlay();
   try {
-    if (accept) {
-      // Accept request - add to friends list
-      await currentRef.update({
-        friends: FieldValue.arrayUnion(requestorUid),
-        pendingRequests: FieldValue.arrayRemove(requestorUid),
-      });
+    await db.runTransaction(async (tx) => {
+      if (accept) {
+        tx.update(currentRef, {
+          friends: firebase.firestore.FieldValue.arrayUnion(requestorUid),
+          pendingRequests:
+            firebase.firestore.FieldValue.arrayRemove(requestorUid),
+        });
+        tx.update(requestorRef, {
+          friends: firebase.firestore.FieldValue.arrayUnion(currentUid),
+          sentRequests: firebase.firestore.FieldValue.arrayRemove(currentUid),
+        });
+      } else {
+        tx.update(currentRef, {
+          pendingRequests:
+            firebase.firestore.FieldValue.arrayRemove(requestorUid),
+        });
+        tx.update(requestorRef, {
+          sentRequests: firebase.firestore.FieldValue.arrayRemove(currentUid),
+        });
+      }
+    });
 
-      await requestorRef.update({
-        friends: FieldValue.arrayUnion(currentUid),
-        sentRequests: FieldValue.arrayRemove(currentUid),
-      });
-
-      Toast.fire({ icon: "success", title: "Friend request accepted!" });
-    } else {
-      // Reject request
-      await currentRef.update({
-        pendingRequests: FieldValue.arrayRemove(requestorUid),
-      });
-
-      await requestorRef.update({
-        sentRequests: FieldValue.arrayRemove(currentUid),
-      });
-
-      Toast.fire({ icon: "info", title: "Friend request rejected" });
-    }
-
-    // Reload requests list
+    Toast.fire({
+      icon: "success",
+      title: accept ? "Friend request accepted!" : "Friend request rejected",
+    });
     await loadFriendRequests();
   } catch (err) {
     console.error("Handle request error:", err);
