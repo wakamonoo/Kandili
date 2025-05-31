@@ -10,7 +10,7 @@
 }
 .tab-button.active {
   border-bottom: 3px solid #3b82f6;
-  color: #3b82f6;
+  color: white;
   font-weight: 600;
 }
 /* Initially hide buttons on small screens */
