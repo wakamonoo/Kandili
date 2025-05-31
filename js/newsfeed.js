@@ -467,5 +467,3 @@ function renderNewsfeedPost(entry) {
     feather.replace({ iconNode: postElement }); // Replace feather icons for the newly added post element
 }
 
-// Ensure you have firebase.js and ui.js in the same directory, or adjust paths.
-// You might also need to include 'Swal' for SweetAlert2 if it's not globally available.
