@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Metadata & Configuration ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kandili</title>
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Tailwind CSS Setup ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -15,8 +17,9 @@
         },
       };
     </script>
-    <link rel="icon" href="images/front.png" type="image/png" />
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Favicons and Fonts ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+    <link rel="icon" href="images/front.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -24,6 +27,7 @@
       rel="stylesheet"
     />
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Firebase & Libraries ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -41,6 +45,7 @@
     class="min-h-screen bg-rose-50 text-gray-800 flex flex-col"
     style="font-family: 'Nunito', sans-serif"
   >
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Header ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <header class="bg-white shadow-md">
       <div
         class="mx-auto max-w-3xl px-4 py-3 flex justify-between items-center"
@@ -48,7 +53,6 @@
         <a href="index.html">
           <img src="images/logo.png" alt="logo" class="h-10" />
         </a>
-
         <div class="space-x-4">
           <button
             id="signInBtn"
@@ -66,6 +70,7 @@
       </div>
     </header>
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Loading Overlay ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div
       id="loadingOverlay"
       class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-[100] hidden"
@@ -75,6 +80,7 @@
       ></div>
     </div>
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Timeline ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <main
       id="timeline"
       data-page
@@ -105,6 +111,7 @@
       <div id="timelineEntries" class="space-y-4"></div>
     </main>
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Newsfeed Page ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <section
       id="newsfeedPage"
       data-page
@@ -128,6 +135,7 @@
       <div id="newsfeedContent" class="space-y-6"></div>
     </section>
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Floating Buttons ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div class="fixed bottom-6 right-6 flex flex-col items-end space-y-4">
       <button
         id="fabToggleBtn"
@@ -175,6 +183,7 @@
       </div>
     </div>
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Entry Modal ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div
       id="entryModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
@@ -225,6 +234,7 @@
       </div>
     </div>
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Add Friend Modal ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div
       id="addFriendModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
@@ -252,6 +262,7 @@
       </div>
     </div>
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Friend Requests Modal ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <div
       id="friendRequestsModal"
       class="fixed inset-0 bg-black/40 flex items-center justify-center backdrop-blur-sm hidden"
@@ -273,6 +284,7 @@
       </div>
     </div>
 
+    <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Script Modules ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
     <script type="module" src="./js/main.js"></script>
     <script src="./js/menu.js"></script>
   </body>

@@ -1,4 +1,3 @@
-// js/friends.js
 import { db, auth, FieldValue } from "./firebase.js";
 import { DOM } from "./dom.js";
 import { Toast, showLoadingOverlay, hideLoadingOverlay } from "./ui.js";
@@ -6,8 +5,9 @@ import { getCurrentUserProfile } from "./auth.js";
 
 let searchTimeout;
 
+// ━━━━━━━━━━━━━━━━━━ Setup Listeners for Friend-Related UI ━━━━━━━━━━━━━━━━━━ //
 export function setupFriendListeners() {
-  /* ---------- "Add friend" modal ---------- */
+  // ── Add Friend Modal ──
   DOM.addFriendBtn.onclick = () => {
     DOM.addFriendModal.classList.remove("hidden");
     DOM.addFriendSearchInput.value = "";
@@ -23,7 +23,7 @@ export function setupFriendListeners() {
     searchTimeout = setTimeout(() => handleFriendSearch(e), 300);
   };
 
-  /* ---------- "Friend requests" modal ---------- */
+  // ── Friend Requests Modal ──
   DOM.friendRequestsBtn.onclick = async () => {
     DOM.friendRequestsModal.classList.remove("hidden");
     await loadFriendRequests();
@@ -34,6 +34,7 @@ export function setupFriendListeners() {
   };
 }
 
+// ━━━━━━━━━━━━━━━━━━ Handle Friend Search ━━━━━━━━━━━━━━━━━━ //
 async function handleFriendSearch(e) {
   const termRaw = e.target.value.trim();
   const term = termRaw.toLowerCase();
@@ -53,14 +54,12 @@ async function handleFriendSearch(e) {
   try {
     const usersRef = db.collection("users");
 
-    // Search by display name
     const nameQuery = usersRef
       .where("displayNameLower", ">=", term)
       .where("displayNameLower", "<=", term + "\uf8ff")
       .limit(10)
       .get();
 
-    // Search by email
     const emailQuery = usersRef
       .where("emailLower", ">=", term)
       .where("emailLower", "<=", term + "\uf8ff")
@@ -71,7 +70,6 @@ async function handleFriendSearch(e) {
 
     hideLoadingOverlay();
 
-    // Merge results and remove duplicates
     const docs = [];
     const seen = new Set();
 
@@ -105,14 +103,14 @@ async function handleFriendSearch(e) {
   }
 }
 
+// ━━━━━━━━━━━━━━━━━━ Render Search Results ━━━━━━━━━━━━━━━━━━ //
 function renderSearchResults(userDocs) {
   const profile = getCurrentUserProfile();
 
   userDocs.forEach((doc) => {
     const data = doc.data();
-    if (data.uid === auth.currentUser.uid) return; // skip self
+    if (data.uid === auth.currentUser.uid) return;
 
-    // Use the new sentRequests field to track outgoing requests
     const isFriend = profile.friends.includes(data.uid);
     const isPendingSent = profile.sentRequests?.includes(data.uid);
     const isPendingReceived = profile.pendingRequests?.includes(data.uid);
@@ -158,18 +156,17 @@ function renderSearchResults(userDocs) {
   });
 }
 
+// ━━━━━━━━━━━━━━━━━━ Send Friend Request ━━━━━━━━━━━━━━━━━━ //
 async function sendFriendRequest(targetUid) {
   const currentUid = auth.currentUser.uid;
   const targetRef = db.collection("users").doc(targetUid);
   const currentUserRef = db.collection("users").doc(currentUid);
 
   try {
-    // Update target user's pendingRequests
     await targetRef.update({
       pendingRequests: FieldValue.arrayUnion(currentUid),
     });
 
-    // Update current user's sentRequests
     await currentUserRef.update({
       sentRequests: FieldValue.arrayUnion(targetUid),
     });
@@ -185,6 +182,7 @@ async function sendFriendRequest(targetUid) {
   }
 }
 
+// ━━━━━━━━━━━━━━━━━━ Load Incoming Friend Requests ━━━━━━━━━━━━━━━━━━ //
 async function loadFriendRequests() {
   DOM.friendRequestsList.innerHTML = "";
 
@@ -230,6 +228,7 @@ async function loadFriendRequests() {
   }
 }
 
+// ━━━━━━━━━━━━━━━━━━ Render Friend Request Row ━━━━━━━━━━━━━━━━━━ //
 function renderRequestRow(data) {
   const uid = data.uid;
 
@@ -261,6 +260,7 @@ function renderRequestRow(data) {
     handleFriendRequest(uid, false);
 }
 
+// ━━━━━━━━━━━━━━━━━━ Accept or Reject Friend Request ━━━━━━━━━━━━━━━━━━ //
 async function handleFriendRequest(requestorUid, accept) {
   const currentUid = auth.currentUser.uid;
   const db = firebase.firestore();

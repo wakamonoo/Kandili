@@ -1,12 +1,11 @@
-// js/firebase.js
-
 import { firebaseConfig } from './config.js';
 
-// Initialize Firebase only once
+// ━━━━━━━━━━━━━━━━━━ Initialize Firebase (Only Once) ━━━━━━━━━━━━━━━━━━ //
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
 
+// ━━━━━━━━━━━━━━━━━━ Firebase Services Exports ━━━━━━━━━━━━━━━━━━ //
 export const auth = firebase.auth();
 export const db = firebase.firestore();
-export const FieldValue = firebase.firestore.FieldValue; // Export FieldValue for convenience
+export const FieldValue = firebase.firestore.FieldValue; 

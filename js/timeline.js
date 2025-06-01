@@ -1,5 +1,3 @@
-// js/timeline.js
-
 import { db, auth, FieldValue } from "./firebase.js";
 import { DOM } from "./dom.js";
 import {
@@ -12,10 +10,11 @@ import {
 import { getCurrentUserProfile, getFriendUserProfiles } from "./auth.js";
 import { beginEditEntry, askDeleteEntry } from "./entries.js";
 
-let unsubscribeEntries = null; // To manage snapshot listeners
+let unsubscribeEntries = null;
 
+// ━━━━━━━━━━━━━━━━━━ Fetch and Render Timeline Entries ━━━━━━━━━━━━━━━━━━ //
 export async function fetchAndRenderTimelineEntries() {
-  if (unsubscribeEntries) unsubscribeEntries(); // Remove previous listener
+  if (unsubscribeEntries) unsubscribeEntries();
 
   const currentUserUid = auth.currentUser.uid;
 
@@ -32,12 +31,10 @@ export async function fetchAndRenderTimelineEntries() {
       allEntries.push({ id: doc.id, ...doc.data(), ownerUid: currentUserUid });
     });
 
-    // Sort by date (descending)
     allEntries.sort(
       (a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)
     );
 
-    // Render
     DOM.timelineEntries.innerHTML = "";
     if (allEntries.length === 0) {
       updateTimelineDisplay("noData");
@@ -48,8 +45,9 @@ export async function fetchAndRenderTimelineEntries() {
   });
 }
 
+// ━━━━━━━━━━━━━━━━━━ Render Timeline Card ━━━━━━━━━━━━━━━━━━ //
 function renderCard(doc) {
-  const d = doc; // doc is already the data object from the aggregation
+  const d = doc;
   const docId = d.id;
   const ownerUid = d.ownerUid;
 
@@ -101,8 +99,7 @@ function renderCard(doc) {
         </button>
     </div>
     <div class="comments-section mt-3 hidden">
-        <div class="comments-list space-y-2">
-            </div>
+        <div class="comments-list space-y-2"></div>
         <div class="flex mt-3">
             <input type="text" placeholder="Add a comment..." class="comment-input flex-1 rounded-lg border-gray-300">
             <button class="send-comment-btn ml-2 px-4 py-2 bg-rose-500 text-white rounded-lg">Send</button>
@@ -111,14 +108,11 @@ function renderCard(doc) {
   `;
   DOM.timelineEntries.append(article);
 
-  // Add event listeners for edit/delete
   if (ownerUid === auth.currentUser.uid) {
-    article.querySelector(".edit-entry").onclick = () => beginEditEntry(d); // Pass full data for editing
-    article.querySelector(".delete-entry").onclick = () =>
-      askDeleteEntry(docId);
+    article.querySelector(".edit-entry").onclick = () => beginEditEntry(d);
+    article.querySelector(".delete-entry").onclick = () => askDeleteEntry(docId);
   }
 
-  // Reactions
   const likeBtn = article.querySelector(".like-btn");
   likeBtn.addEventListener("click", async () => {
     const entryId = likeBtn.dataset.entryId;
@@ -136,15 +130,14 @@ function renderCard(doc) {
       const userLiked = likes.includes(auth.currentUser.uid);
 
       if (userLiked) {
-        likes = likes.filter((uid) => uid !== auth.currentUser.uid); // Unlike
+        likes = likes.filter((uid) => uid !== auth.currentUser.uid);
       } else {
-        likes.push(auth.currentUser.uid); // Like
+        likes.push(auth.currentUser.uid);
       }
       await entryRef.update({ likes: likes });
     }
   });
 
-  // Update like count and icon dynamically
   db.collection("couples")
     .doc(ownerUid)
     .collection("entries")
@@ -169,7 +162,6 @@ function renderCard(doc) {
       }
     });
 
-  // Comments
   const commentBtn = article.querySelector(".comment-btn");
   const commentsSection = article.querySelector(".comments-section");
   const commentsList = article.querySelector(".comments-list");
@@ -178,7 +170,6 @@ function renderCard(doc) {
 
   commentBtn.onclick = () => {
     commentsSection.classList.toggle("hidden");
-    // The comments listener will automatically load/update
   };
 
   sendCommentBtn.onclick = async () => {
@@ -206,7 +197,6 @@ function renderCard(doc) {
     }
   };
 
-  // Real-time comments listener
   db.collection("couples")
     .doc(ownerUid)
     .collection("entries")
@@ -243,38 +233,37 @@ function renderCard(doc) {
         feather.replace({ iconNode: commentDiv });
 
         if (c.userId === auth.currentUser.uid) {
-          commentDiv.querySelector(".delete-comment-btn").onclick =
-            async () => {
-              Swal.fire({
-                title: "Delete comment?",
-                text: "You can’t undo this action.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#f43f5e",
-                cancelButtonColor: "#a1a1aa",
-                confirmButtonText: "Yes, delete!",
-              }).then(async (res) => {
-                if (res.isConfirmed) {
-                  try {
-                    await db
-                      .collection("couples")
-                      .doc(ownerUid)
-                      .collection("entries")
-                      .doc(docId)
-                      .collection("comments")
-                      .doc(commentDoc.id)
-                      .delete();
-                    Toast.fire({ icon: "success", title: "Comment deleted!" });
-                  } catch (e) {
-                    Swal.fire({
-                      icon: "error",
-                      title: "Delete failed",
-                      text: e.message,
-                    });
-                  }
+          commentDiv.querySelector(".delete-comment-btn").onclick = async () => {
+            Swal.fire({
+              title: "Delete comment?",
+              text: "You can’t undo this action.",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonColor: "#f43f5e",
+              cancelButtonColor: "#a1a1aa",
+              confirmButtonText: "Yes, delete!",
+            }).then(async (res) => {
+              if (res.isConfirmed) {
+                try {
+                  await db
+                    .collection("couples")
+                    .doc(ownerUid)
+                    .collection("entries")
+                    .doc(docId)
+                    .collection("comments")
+                    .doc(commentDoc.id)
+                    .delete();
+                  Toast.fire({ icon: "success", title: "Comment deleted!" });
+                } catch (e) {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Delete failed",
+                    text: e.message,
+                  });
                 }
-              });
-            };
+              }
+            });
+          };
         }
       });
       feather.replace({ iconNode: commentsList });

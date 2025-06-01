@@ -3,10 +3,11 @@
 import { db, auth, FieldValue } from './firebase.js';
 import { DOM } from './dom.js';
 import { Toast, showLoadingOverlay, hideLoadingOverlay, hideEntryModal } from './ui.js';
-import { IMGUR_CLIENT_ID } from './config.js'; // Import IMGUR_CLIENT_ID
+import { IMGUR_CLIENT_ID } from './config.js'; 
 
-let currentEntryId = null; // Renamed to avoid confusion with 'currentId' in main.js
+let currentEntryId = null; 
 
+// ━━━━━━━━━━━━━━━━━━ Setup Listeners for Entry Modal Actions ━━━━━━━━━━━━━━━━━━ //
 export function setupEntryModalListeners() {
   DOM.openModalBtn.onclick = () => {
     currentEntryId = null;
@@ -59,15 +60,17 @@ export function setupEntryModalListeners() {
   };
 }
 
+// ━━━━━━━━━━━━━━━━━━ Begin Editing Existing Entry ━━━━━━━━━━━━━━━━━━ //
 export function beginEditEntry(entryData) {
   currentEntryId = entryData.id;
   DOM.saveEntryBtn.textContent = "Update";
   DOM.entryDateInput.value = entryData.date;
   DOM.entryNoteInput.value = entryData.note || "";
-  DOM.entryImgInput.value = ""; // Clear file input for edit
+  DOM.entryImgInput.value = ""; 
   DOM.entryModal.classList.remove("hidden");
 }
 
+// ━━━━━━━━━━━━━━━━━━ Prompt Deletion of an Entry ━━━━━━━━━━━━━━━━━━ //
 export function askDeleteEntry(entryId) {
   Swal.fire({
     title: "Delete this memory?",
@@ -93,6 +96,7 @@ export function askDeleteEntry(entryId) {
   });
 }
 
+// ━━━━━━━━━━━━━━━━━━ Reset Entry Modal Form Fields ━━━━━━━━━━━━━━━━━━ //
 function resetEntryForm() {
   currentEntryId = null;
   DOM.entryDateInput.value = "";
@@ -101,6 +105,7 @@ function resetEntryForm() {
   DOM.saveEntryBtn.textContent = "Save";
 }
 
+// ━━━━━━━━━━━━━━━━━━ Upload Image File to Imgur ━━━━━━━━━━━━━━━━━━ //
 async function uploadToImgur(file) {
   const fd = new FormData();
   fd.append("image", file);

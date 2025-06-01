@@ -1,28 +1,32 @@
+/* ━━━━━━━━━━━━━━━━━━━━━━━━ Newsweed Page ━━━━━━━━━━━━━━━━━━━━━━━━ */
 .newsfeed-post {
   transition: all 0.3s ease;
 }
+
 .newsfeed-post:hover {
   transform: translateY(-3px);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
+
 .tab-button {
   transition: all 0.2s ease;
 }
+
 .tab-button.active {
   border-bottom: 3px solid #3b82f6;
   color: white;
   font-weight: 600;
 }
-/* Initially hide buttons on small screens */
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━ Media Query for Buttons ━━━━━━━━━━━━━━━━━━━━━━━━ */
 @media (max-width: 767px) {
   .fab-buttons button:not(#fabToggleBtn) {
     display: none;
-    opacity: 0; /* For animation */
-    transform: translateY(20px); /* For animation */
+    opacity: 0;
+    transform: translateY(20px);
   }
 }
 
-/* Animation for revealed buttons */
 .fab-button-revealed {
   animation: slideUpAndFadeIn 0.3s ease-out forwards;
 }

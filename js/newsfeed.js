@@ -9,7 +9,7 @@ import {
 } from "./ui.js";
 import { getFriendUserProfiles } from "./auth.js";
 
-/* ───────────────────────── INITIAL SET-UP ───────────────────────── */
+// ━━━━━━━━━━━━━━━━━━ Setup Newsfeed Listeners ━━━━━━━━━━━━━━━━━━ //
 export function setupNewsfeedListeners() {
   DOM.newsfeedBtn.onclick = () => {
     showNewsfeedPage();
@@ -28,7 +28,7 @@ export function setupNewsfeedListeners() {
   };
 }
 
-/* helpers */
+// ━━━━━━━━━━━━━━━━━━ Show Newsfeed Page ━━━━━━━━━━━━━━━━━━ //
 function showNewsfeedPage() {
   document
     .querySelectorAll("[data-page]")
@@ -36,6 +36,7 @@ function showNewsfeedPage() {
   DOM.newsfeedPage.classList.remove("hidden");
 }
 
+// ━━━━━━━━━━━━━━━━━━ Set Active Tab Button ━━━━━━━━━━━━━━━━━━ //
 function setActiveTab(id) {
   DOM.allPostsTab.classList.remove("bg-newsfeed-blue", "text-white", "active");
   DOM.latestPostsTab.classList.remove(
@@ -48,20 +49,23 @@ function setActiveTab(id) {
   btn.classList.add("bg-newsfeed-blue", "text-white", "active");
 }
 
-/* ──────────────── LOADERS (friends’ posts only) ──────────────── */
+// ━━━━━━━━━━━━━━━━━━ Load All Newsfeed Posts ━━━━━━━━━━━━━━━━━━ //
 export async function loadNewsfeed() {
   await loadPosts({ latestOnly: false });
 }
+
+// ━━━━━━━━━━━━━━━━━━ Load Latest Friend Posts Only ━━━━━━━━━━━━━━━━━━ //
 async function loadLatestPosts() {
   await loadPosts({ latestOnly: true });
 }
 
+// ━━━━━━━━━━━━━━━━━━ Fetch and Render Posts ━━━━━━━━━━━━━━━━━━ //
 async function loadPosts({ latestOnly }) {
   showLoadingOverlay();
   DOM.newsfeedContent.innerHTML = "";
 
   try {
-    const friendProfiles = getFriendUserProfiles(); // Map<uid, profile>
+    const friendProfiles = getFriendUserProfiles();
     if (!friendProfiles.size) {
       DOM.newsfeedContent.innerHTML = blank("Add friends to see their posts!");
       return;
@@ -101,7 +105,7 @@ async function loadPosts({ latestOnly }) {
   }
 }
 
-/* ─────────────────────── RENDER ONE POST ─────────────────────── */
+// ━━━━━━━━━━━━━━━━━━ Render a Single Post ━━━━━━━━━━━━━━━━━━ //
 function renderPost(entry) {
   const profiles = getFriendUserProfiles();
   const profile = profiles.get(entry.ownerUid);
@@ -110,7 +114,6 @@ function renderPost(entry) {
   const name = profile.displayName || "Unknown";
   const photo = profile.photoURL || "https://via.placeholder.com/40";
   const date = entry.createdAt?.toDate().toLocaleDateString() || "";
-
   const urls = entry.imageUrls || (entry.imageUrl ? [entry.imageUrl] : []);
   const likeCount = entry.likes?.length || 0;
 
@@ -181,7 +184,6 @@ function renderPost(entry) {
   `;
   DOM.newsfeedContent.append(art);
 
-  /* Likes – atomic toggle with arrayUnion / arrayRemove */
   const likeBtn = art.querySelector(".like-btn");
   likeBtn.onclick = async () => {
     const ref = db
@@ -212,7 +214,6 @@ function renderPost(entry) {
     }
   };
 
-  /* Live like counter / heart fill */
   db.collection("couples")
     .doc(entry.ownerUid)
     .collection("entries")
@@ -233,7 +234,6 @@ function renderPost(entry) {
       }
     });
 
-  /* Comments (identical logic as before) */
   const toggle = art.querySelector(".comment-toggle");
   const section = art.querySelector(".comments-section");
   const list = art.querySelector(".comments-list");
@@ -268,7 +268,6 @@ function renderPost(entry) {
     }
   };
 
-  /* Live comment list */
   db.collection("couples")
     .doc(entry.ownerUid)
     .collection("entries")
@@ -316,7 +315,7 @@ function renderPost(entry) {
     });
 }
 
-/* utility */
+// ━━━━━━━━━━━━━━━━━━ Blank State Utility ━━━━━━━━━━━━━━━━━━ //
 const blank = (msg, err = false) => `
   <div class="text-center py-8">
     <p class="${err ? "text-red-500" : "text-gray-500"}">${msg}</p>

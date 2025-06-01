@@ -1,4 +1,3 @@
-// js/main.js
 import { setupAuthListeners } from './auth.js';
 import { setupEntryModalListeners } from './entries.js';
 import { setupFriendListeners } from './friends.js';

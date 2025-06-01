@@ -1,5 +1,3 @@
-// js/ui.js
-
 import { DOM } from './dom.js';
 
 export const Toast = Swal.mixin({

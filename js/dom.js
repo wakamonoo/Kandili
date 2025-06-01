@@ -1,46 +1,47 @@
-// js/dom.js
+// ━━━━━━━━━━━━━━━━━━━━━━━━ Helper Function for DOM Access ━━━━━━━━━━━━━━━━━━━━━━━━ //
 const $ = (id) => document.getElementById(id);
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━ Exported DOM References ━━━━━━━━━━━━━━━━━━━━━━━━ //
 export const DOM = {
-  /* auth & header */
-  signInBtn:  $("signInBtn"),
+  // ━━━━━━━━━━━━━━━━━━ Authentication & Header Buttons ━━━━━━━━━━━━━━━━━━ //
+  signInBtn: $("signInBtn"),
   signOutBtn: $("signOutBtn"),
 
-  /* timeline page */
-  timeline:         $("timeline"),
-  timelineEntries:  $("timelineEntries"),
-  welcomeMessage:   $("welcomeMessage"),
-  noDataMessage:    $("noDataMessage"),
+  // ━━━━━━━━━━━━━━━━━━ Timeline Page Elements ━━━━━━━━━━━━━━━━━━ //
+  timeline: $("timeline"),
+  timelineEntries: $("timelineEntries"),
+  welcomeMessage: $("welcomeMessage"),
+  noDataMessage: $("noDataMessage"),
 
-  /* entry creation */
-  openModalBtn:   $("openModalBtn"),
-  entryModal:     $("entryModal"),
-  cancelBtn:      $("cancelBtn"),
-  saveEntryBtn:   $("saveEntryBtn"),
+  // ━━━━━━━━━━━━━━━━━━ Entry Creation Modal & Inputs ━━━━━━━━━━━━━━━━━━ //
+  openModalBtn: $("openModalBtn"),
+  entryModal: $("entryModal"),
+  cancelBtn: $("cancelBtn"),
+  saveEntryBtn: $("saveEntryBtn"),
   entryDateInput: $("entryDate"),
   entryNoteInput: $("entryNote"),
-  entryImgInput:  $("entryImg"),
+  entryImgInput: $("entryImg"),
 
-  /* add friend */
-  addFriendBtn:             $("addFriendBtn"),
-  addFriendModal:           $("addFriendModal"),
-  addFriendSearchInput:     $("addFriendSearchInput"),
-  addFriendSearchResults:   $("addFriendSearchResults"),
-  closeAddFriendModalBtn:   $("closeAddFriendModalBtn"),
+  // ━━━━━━━━━━━━━━━━━━ Add Friend Modal & Elements ━━━━━━━━━━━━━━━━━━ //
+  addFriendBtn: $("addFriendBtn"),
+  addFriendModal: $("addFriendModal"),
+  addFriendSearchInput: $("addFriendSearchInput"),
+  addFriendSearchResults: $("addFriendSearchResults"),
+  closeAddFriendModalBtn: $("closeAddFriendModalBtn"),
 
-  /* friend requests */
-  friendRequestsBtn:           $("friendRequestsBtn"),
-  friendRequestsModal:         $("friendRequestsModal"),
-  friendRequestsList:          $("friendRequestsList"),
+  // ━━━━━━━━━━━━━━━━━━ Friend Requests Modal & Controls ━━━━━━━━━━━━━━━━━━ //
+  friendRequestsBtn: $("friendRequestsBtn"),
+  friendRequestsModal: $("friendRequestsModal"),
+  friendRequestsList: $("friendRequestsList"),
   closeFriendRequestsModalBtn: $("closeFriendRequestsModalBtn"),
 
-  /* global overlay */
+  // ━━━━━━━━━━━━━━━━━━ Global Overlay Element ━━━━━━━━━━━━━━━━━━ //
   loadingOverlay: $("loadingOverlay"),
 
-  /* news-feed page */
-  newsfeedBtn:      $("newsfeedBtn"),
-  newsfeedPage:     $("newsfeedPage"),
-  newsfeedContent:  $("newsfeedContent"),
-  allPostsTab:      $("allPostsTab"),
-  latestPostsTab:   $("latestPostsTab"),
+  // ━━━━━━━━━━━━━━━━━━ Newsfeed Page & Tabs ━━━━━━━━━━━━━━━━━━ //
+  newsfeedBtn: $("newsfeedBtn"),
+  newsfeedPage: $("newsfeedPage"),
+  newsfeedContent: $("newsfeedContent"),
+  allPostsTab: $("allPostsTab"),
+  latestPostsTab: $("latestPostsTab"),
 };
