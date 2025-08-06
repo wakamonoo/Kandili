@@ -26,6 +26,11 @@
 
 ---
 
+## 🚀 Try It Out
+
+Visit the live demo at [kandili-wakamonoo.vercel.app](https://kandili-wakamonoo.vercel.app) :contentReference[oaicite:1]{index=1}
+
+---
 ## 🚀 Getting Started
 
 1. **Clone the repository**
